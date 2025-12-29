@@ -134,10 +134,10 @@ export const siteConfig: SiteConfig = {
   },
   sections: {
     about: true,
-    projects: true,
-    blog: true,
     work: true,
     education: true,
+    projects: true,
+    blog: true,
     hackathons: true,
     contact: true,
   },
