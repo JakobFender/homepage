@@ -8,5 +8,5 @@ link: "https://vzug.com"
 ---
 
 During my apprenticeship, I gained insights into IT and software development. From my second to fourth year, I was
-involved in troubleshooting and improving the V‑ZUG E‑Commerce platform and developing various data exports. In my final
+involved in improving and troubleshooting the V‑ZUG E‑Commerce platform and developing various data exports. In my final
 two years, I took on the responsibility of mentoring and training apprentices in web development. 
