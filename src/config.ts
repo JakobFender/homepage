@@ -133,7 +133,7 @@ export const siteConfig: SiteConfig = {
     ],
   },
   sections: {
-    about: true,
+    about: false,
     work: true,
     education: true,
     projects: true,
