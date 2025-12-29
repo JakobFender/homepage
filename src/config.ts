@@ -95,23 +95,18 @@ export interface SiteConfig {
  * Update these values to customize your portfolio
  */
 export const siteConfig: SiteConfig = {
-  name: "🌻 Bloomfolio",
-  title: "Astro Portfolio Template built with 🌼 DaisyUI",
+  name: "Jakob Fender",
+  title: "Research Assistant in AI & ML",
   description:
-    "A modern, responsive, and customizable portfolio template built with Astro and DaisyUI. Perfect for developers, designers, and creatives to showcase their work and skills.",
-  avatar: "../assets/bloomfolio.png",
-  location: "🇧🇷 Brazil",
-  email: "hello@example.com",
+    "I work as an AI Research Assistant, focusing on model efficiency, knowledge distillation, and representation learning in the audio domain. My work combines applied research with strong engineering practices.",
+  avatar: "../assets/profile.jpg",
+  location: "🇨🇭 Lucerne, Switzerland",
+  email: "fender.jakob@gmail.com",
   socialLinks: {
-    github: "https://github.com/lauroguedes",
-    linkedin: "https://linkedin.com/in/lauroguedes",
-    twitter: "https://twitter.com/leowg",
-    bluesky: "https://bsky.app/profile/lauroguedes.bsky.social",
-    instagram: "https://instagram.com/lauroguedes.dev",
-    youTube: "https://youtube.com/leowgweb",
-    codetips: "https://codetips.cloud/u/lauroguedes",
+    github: "https://github.com/jakobfender",
+    linkedin: "https://linkedin.com/in/jakob-fender",
   },
-  enableThemeSelector: true,
+  enableThemeSelector: false,
   extraLinks: {
     enable: true,
     links: [
