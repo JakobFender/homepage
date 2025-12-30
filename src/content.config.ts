@@ -47,12 +47,13 @@ const hackathons = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/hackathons" }),
   schema: z.object({
     title: z.string(),
-    location: z.string(),
+    level: z.string(),
+    module: z.string(),
     description: z.string(),
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional(),
-    logo: z.string().optional(),
     sourceLink: z.string().url().optional(),
+    demoLink: z.string().url().optional(),
   }),
 });
 
