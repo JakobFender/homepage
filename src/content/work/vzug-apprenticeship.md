@@ -1,6 +1,6 @@
 ---
-title: "V‑ZUG AG"
-subtitle: "Apprentice Software Developer"
+title: "Apprentice Software Developer"
+subtitle: "V‑ZUG AG"
 logo: "./images/vzug.png"
 startDate: "2017-08-01"
 endDate: "2021-07-31"

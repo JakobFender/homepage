@@ -1,6 +1,6 @@
 ---
-title: "V‑ZUG AG"
-subtitle: "Junior Web Developer"
+title: "Junior Web Developer"
+subtitle: "V‑ZUG AG"
 logo: "./images/vzug.png"
 startDate: "2021-08-01"
 endDate: "2023-02-28"
