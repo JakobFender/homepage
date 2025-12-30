@@ -1,7 +1,7 @@
 ---
 title: "Bachelor in Artificial Intelligence and Machine Learning"
 subtitle: "Lucerne University of Applied Sciences and Arts (HSLU)"
-logo: "./images/hslu.jpg"
+logo: "./images/hslu.png"
 startDate: "2021-09-01"
 endDate: "2026-01-31"
 link: "https://www.hslu.ch/en/lucerne-school-of-information-technology/degree-programs/bachelor/artificial-intelligence-and-machine-learning/"

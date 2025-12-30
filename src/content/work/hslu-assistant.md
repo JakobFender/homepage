@@ -1,7 +1,7 @@
 ---
 title: "Scientific Assistant"
 subtitle: "Lucerne University of Applied Sciences and Arts"
-logo: "./images/hslu.jpg"
+logo: "./images/hslu.png"
 startDate: "2024-01-01"
 link: "https://www.hslu.ch/en/lucerne-school-of-information-technology/research/labs/applied-ai/"
 ---

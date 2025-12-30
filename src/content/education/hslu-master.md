@@ -1,7 +1,7 @@
 ---
 title: "Master of Science in Engineering (Data Science)"
 subtitle: "Lucerne University of Applied Sciences and Arts (HSLU)"
-logo: "./images/hslu.jpg"
+logo: "./images/hslu.png"
 startDate: "2026-02-16"
 link: "https://www.hslu.ch/en/lucerne-school-of-information-technology/degree-programs/master/information-and-communication-technologies/profile-data-science/"
 ---
