@@ -1,0 +1,101 @@
+---
+title: "Model Distillation for Deep Audio Representations"
+description: "Bachelor thesis investigating how large audio representation models such as BEATs can be distilled into lightweight student networks for deployment on hearable devices."
+image: "https://api.dicebear.com/9.x/glass/svg?seed=AudioKD"
+startDate: "2025-08-25"
+endDate: "2026-01-19"
+skills:
+  - Audio Signal Processing
+  - Deep Learning
+  - Knowledge Distillation
+  - PyTorch
+  - Representation Learning
+  - Model Compression
+---
+
+import Figure from "../../components/Figure.astro";
+
+This page presents the publicly shareable summary of my bachelor thesis, which was conducted in collaboration with the
+Applied Artificial Intelligence (AAI) research lab. Due to confidentiality constraints, only selected aspects of the work are
+published here. The thesis was supervised by Dr. Simone Lionetti and reviewed by Dr. Claudio Santelli (Sonova AG).
+
+## Problem Definition
+
+Hearable steering requires understanding of the acoustic environment. Deep representation models such as BEATs achieve
+strong performance on acoustic understanding tasks, making them a natural candidate for powering hearable steering, but
+their prohibitive size makes them impossible to deploy on device. The project investigates how the BEATs audio
+representation model can be reduced by a factor of ten to one hundred in parameters and operations so that it can run
+directly on an edge device while still producing high-quality audio embeddings.
+
+## Solution Concept
+
+The chosen solution for this problem is Knowledge Distillation (KD). The project explores effects of major choices for
+the distillation process such as selecting the effective knowledge distillation targets, identifying suitable datasets,
+and comparing different lightweight student architectures. The distilled models are evaluated on the DEAR benchmark
+which is designed to test relevant hearable tasks.
+Four distillation objectives are examined in this work, three of which focus on preserving relational structure within
+the embedding space. Distance-wise distillation matches the distance between two samples $x_1$ and $x_2$. Angle-wise
+distillation uses three samples $x_1, x_2, x_3$ and aligns the angle $\alpha$ formed at $x_2$. Cosine-wise distillation compares the
+directions of the vectors $x_1$ and $x_2$, and matches the angle $\theta$ between them. Finally, Feature-wise distillation operates
+on the embeddings directly by minimizing the element-wise difference between teacher and student outputs.
+Two datasets are considered. The first is AudioSet, the dataset on which BEATs was originally trained on. The second is
+an internal collection that combines several publicly available audio datasets. The datasets were also combined to test
+whether mixing large general-purpose audio data with smaller specialized datasets offers any additional benefit.
+Two families of vision-based encoder architectures are investigated. MicroNet focuses on extreme efficiency through
+compact building blocks and carefully designed channel interactions, achieving strong ImageNet performance with very few
+parameters. MobileViT combines convolutions with lightweight transformer blocks, enabling both local feature extraction
+and global context modeling.
+
+<Figure
+    src="/images/projects/bachelor_thesis/model_size.png"
+    alt="Comparison of model size for student architectures"
+    caption="Figure 1: Measured Floating Point Operations (FLOPs) and parameter count for backbone-only (solid) and full
+    models including the classification head (white). Variants of the same model are connected with a horizontal line.
+    ImageNet Top 1 accuracy corresponds to the original full model."
+/>
+
+
+
+Evaluation is performed on the DEAR benchmark, which is designed specifically to quantify encoder quality for hearables
+for a set of tasks. DEAR provides eight tasks that test different aspects of audio representation, including general
+scene context, characteristics of speech sources, and several technical acoustic properties.
+
+## Special Challenges
+
+Training time limited the number of experiments, requiring careful handling of data preprocessing and storage.
+Difference in the embedding dimension between the BEATs teacher and small student models demanded considerable
+engineering effort. Additional complexity arose from integrating external source code for both the student models and
+the evaluation workflow.
+Furthermore, interpreting results on the DEAR benchmark proved difficult. Many tasks allow multiple plausible
+interpretations of what constitutes “good” performance, and the relatively small dataset size makes the scores sensitive
+to artifacts in the data. As a result, model scores sometimes reflect these dataset-specific effects rather than genuine
+acoustic understanding.
+
+## Results
+
+Across all experiments a clear trend emerges. Compact student models can match or even surpass the BEATs teacher on
+several DEAR tasks when trained with relational distillation. Especially student architectures from the MobileViT v2
+family often performs at or above teacher level, while MicroNet family members reaches competitive performance with
+significantly fewer FLOPs. These results demonstrate that high quality audio embeddings do not require large encoders as
+long as the distilled students preserve the teacher’s geometric structure.
+
+<Figure
+    src="/images/projects/bachelor_thesis/embeddings.png"
+    alt="Embedding visualization"
+    caption="Figure 2: t-SNE visualizations of representations produced by BEATs (left) and MicroNet M0 (right). Points
+    correspond to samples from the Environment task of the DEAR benchmark. Colors indicate the five classes, ordered
+    from dark to light: domestic, leisure, nature, professional, and transport."
+/>
+
+## Outlook
+
+The work demonstrates that strong audio representations can be distilled from large networks to small ones. Several
+lightweight student networks already outperform the teacher on DEAR. This is promising for edge AI technology. Future
+research could push model size even further down, potentially supported by Neural Architecture Search to explore
+parameter-efficient CNN-focused spaces. Quantization is a promising next step, as results from other works indicate that
+low-bit students may retain much of their performance, shrinking the required memory by a factor of five. Significantly
+reducing the memory required to store model weights improves deployability on constrained devices. Simple evaluation
+methods such as kNN on time-averaged spectrograms remain powerful tools that could support scenarios where even small
+encoders are too costly to deploy.
+
+
