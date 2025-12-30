@@ -52,9 +52,7 @@ export interface SectionsConfig {
   about: boolean;
   /** Show/hide Projects section */
   projects: boolean;
-  /** Show/hide Blog section */
-  blog: boolean;
-  /** Show/hide Work Experience section */
+  /** Show/hide Work section */
   work: boolean;
   /** Show/hide Education section */
   education: boolean;
@@ -137,7 +135,7 @@ export const siteConfig: SiteConfig = {
     work: true,
     education: true,
     projects: true,
-    blog: true,
+    blog: false,
     hackathons: true,
     contact: true,
   },
