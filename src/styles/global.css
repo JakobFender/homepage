@@ -3,9 +3,7 @@
   themes: light --default, dark --prefersdark, synthwave, retro, valentine, dim;
 };
 
-
-.card-body p {
+p, figcaption {
   text-align: justify;
   hyphens: auto;
-
 }
