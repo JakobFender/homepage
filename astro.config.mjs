@@ -17,5 +17,5 @@ export default defineConfig({
         rehypePlugins: [rehypeKatex],
     },
     site: "https://jakobfender.github.io",
-    base: process.env.NODE_ENV === "production" ? "/homepage/" : "/",
+    base: "/",
 });

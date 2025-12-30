@@ -16,8 +16,6 @@ concurrency:
 
 jobs:
   deploy:
-    env:
-      NODE_ENV: production
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
