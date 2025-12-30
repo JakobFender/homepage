@@ -5,8 +5,7 @@
  * Update these values to personalize your portfolio site.
  */
 
-import { BookOpen, FileText, Flower2, CodeXml } from "@lucide/astro";
-import { Code } from "astro:components";
+import { Birdhouse, Folder, CodeXml } from "@lucide/astro";
 
 /**
  * Social media links configuration
@@ -109,22 +108,17 @@ export const siteConfig: SiteConfig = {
     enable: true,
     links: [
       {
-        link: "/blog/guides/bloomfolio-complete-guide",
-        icon: Flower2,
-        label: "Bloomfolio Guide",
+        link: "/",
+        icon: Birdhouse ,
+        label: "Home",
       },
       {
-        link: "/blog/guides/content-collections-guide",
-        icon: BookOpen,
-        label: "Content Guide",
+        link: "/projects",
+        icon: Folder,
+        label: "Projects",
       },
       {
-        link: "/blog/guides/markdown-guide",
-        icon: FileText,
-        label: "Markdown Guide",
-      },
-      {
-        link: "https://github.com/lauroguedes/bloomfolio",
+        link: "https://github.com/JakobFender",
         icon: CodeXml,
         label: "GitHub Repo",
       },
