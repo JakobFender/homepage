@@ -1,15 +1,21 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import {defineConfig} from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [mdx()],
-  vite: {
-    plugins: [tailwindcss()]
-  },
-  site: "https://jakobfender.github.io",
-  base: process.env.NODE_ENV === "production" ? "/homepage/" : "/",
+    integrations: [mdx()],
+    vite: {
+        plugins: [tailwindcss()]
+    },
+    markdown: {
+        remarkPlugins: [remarkMath],
+        rehypePlugins: [rehypeKatex],
+    },
+    site: "https://jakobfender.github.io",
+    base: process.env.NODE_ENV === "production" ? "/homepage/" : "/",
 });
