@@ -11,5 +11,5 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
   site: "https://jakobfender.github.io",
-  base: "/",
+  base: "/homepage/",
 });
