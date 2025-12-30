@@ -16,6 +16,6 @@ export default defineConfig({
         remarkPlugins: [remarkMath],
         rehypePlugins: [rehypeKatex],
     },
-    site: "https://jakobfender.github.io",
+    site: "https://jakob-fender.ch",
     base: "/",
 });
