@@ -10,7 +10,7 @@ import Contact from "../components/Contact.astro";
 import { Briefcase, GraduationCap } from "@lucide/astro";
 import { getEntry, render } from "astro:content";
 import { siteConfig } from "../config";
-import bloomfolioLogo from "../assets/bloomfolio.jpg";
+import profilePicture from "../assets/profile.jpg";
 
 ---
 
@@ -24,7 +24,7 @@ import bloomfolioLogo from "../assets/bloomfolio.jpg";
       name={siteConfig.name}
       title={siteConfig.title}
       description={siteConfig.description}
-      avatar={bloomfolioLogo}
+      avatar={profilePicture}
       location={siteConfig.location}
       socialLinks={siteConfig.socialLinks}
     />
