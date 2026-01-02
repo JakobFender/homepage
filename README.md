@@ -12,8 +12,6 @@ A modern, customizable portfolio template built with **Astro 5** and **DaisyUI 5
 
 </br>
 
-<img width="1920" height="1080" alt="img1" src="https://github.com/user-attachments/assets/b882118c-2070-4b12-85f4-8491ea9517ee" />
-
 </div>
 
 ## ✨ Features
