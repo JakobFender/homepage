@@ -66,7 +66,8 @@ const entriesWithContent = await Promise.all(
 
     {
       variant === "timeline" ? (
-        <ul class="timeline timeline-vertical timeline-snap-icon">
+        <div class="hidden sm:block">
+          <ul class="timeline timeline-vertical timeline-snap-icon">
           {entriesWithContent.map(({ entry, Content }, index) => (
             <li>
               {index > 0 && <hr class="bg-base-100" />}
@@ -124,6 +125,63 @@ const entriesWithContent = await Promise.all(
             </li>
           ))}
         </ul>
+        </div>
+        <!-- Mobile -->
+        <div class="sm:hidden">
+          <ul class="flex flex-col relative">
+            {entriesWithContent.map(({ entry, Content }, index) => (
+              <li class="relative flex">
+                {/* Timeline column */}
+                <div class="relative flex flex-col items-center mr-6">
+                    <IconComponent class={`size-5 text-${color} z-10 bg-base-200`} />
+
+                    {index < entriesWithContent.length - 1 && (
+                      <div class="absolute top-6 bottom-2 w-1 bg-base-100 rounded"></div>
+                    )}
+                </div>
+
+                {/* Content column */}
+                <div class="flex flex-col flex-1 gap-2 mb-10">
+                  <time class="font-mono text-sm text-base-content/70 italic">
+                    {formatPeriod(entry.data.startDate, entry.data.endDate)}
+                  </time>
+
+                  <div class="card bg-base-100 shadow flex-1">
+                    <div class="card-body">
+                      <div class="flex items-center gap-3 mb-2">
+                        {entry.data.logo && (
+                          <div class="avatar">
+                            <div class="w-10 mask mask-squircle">
+                              <img src={entry.data.logo} alt={entry.data.title} />
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <h3 class="font-bold">{entry.data.title}</h3>
+                          <p class={`text-${color} font-semibold text-sm`}>
+                            {entry.data.subtitle}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="prose prose-sm max-w-none text-base-content/80">
+                        <Content />
+                      </div>
+
+                      {entry.data.link && (
+                        <div class="flex justify-end mt-2">
+                          <a href={entry.data.link} class="link link-hover">
+                            {collection === "work" ? "View Company" : "View Institution"}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <ul class="list bg-base-100 rounded-box shadow-lg">
           {entriesWithContent.map(({ entry, Content }, index) => (
