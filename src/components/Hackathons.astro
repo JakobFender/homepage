@@ -4,87 +4,73 @@ import {getCollection} from "astro:content";
 const hackathonEntries = await getCollection("hackathons");
 
 // Sort by start date, most recent first
-const sortedHackathons = hackathonEntries.sort(
-    (a, b) => b.data.startDate.getTime() - a.data.startDate.getTime()
-);
+const sortedHackathons = hackathonEntries.sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
 
 function formatPeriod(startDate: Date, endDate?: Date) {
-    const options: Intl.DateTimeFormatOptions = {
-        month: "short",
-        year: "numeric",
-    };
-    const start = startDate.toLocaleDateString("en-US", options);
-    const end = endDate
-        ? endDate.toLocaleDateString("en-US", options)
-        : "Present";
-    return `${start} - ${end}`;
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short", year: "numeric",
+  };
+  const start = startDate.toLocaleDateString("en-US", options);
+  const end = endDate ? endDate.toLocaleDateString("en-US", options) : "Present";
+  return `${start} - ${end}`;
 }
 ---
 
 <section id="hackathons" class="py-20 px-4">
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold mb-4">I like building things</h2>
-            <p class="text-lg text-base-content/70">
-                During my time at university, I completed several project-based modules with concrete deliverables. I
-                like to showcase some of this work here. A few projects are older, and there are many things I would
-                approach differently today, so please don’t be too critical 🙂
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {
-                sortedHackathons.map((hackathon) => (
-                        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                            <div class="card-body">
-                                <div class="flex items-start gap-4">
-                                    <div class="flex-1">
-                                        <div class="flex items-center justify-between">
-                                            <time class="text-sm text-base-content/60">
-                                                {formatPeriod(hackathon.data.startDate, hackathon.data.endDate)}
-                                            </time>
-
-                                            <span class="badge badge-sm badge-outline text-primary font-semibold">
-                                                {hackathon.data.level}
-                                            </span>
-                                        </div>
-
-                                        <h3 class="card-title mt-1">{hackathon.data.title}</h3>
-                                        <p class="text-sm text-primary font-semibold">
-                                            {hackathon.data.module}
-                                        </p>
-                                        <p class="text-base-content/80 mt-3">
-                                            {hackathon.data.description}
-                                        </p>
-                                        <div class="card-actions justify-end mt-4 gap-2">
-                                            {
-                                                hackathon.data.sourceLink && (
-                                                            <a href={hackathon.data.sourceLink}
-                                                               target="_blank"
-                                                               rel="noopener noreferrer"
-                                                               class="btn btn-sm btn-outline btn-primary gap-1">
-                                                                Source
-                                                            </a>
-                                                )
-                                            }
-
-                                            {
-                                                hackathon.data.demoLink && (
-                                                            <a href={hackathon.data.demoLink}
-                                                               target="_blank"
-                                                               rel="noopener noreferrer"
-                                                               class="btn btn-sm btn-primary gap-1">
-                                                                Demo
-                                                            </a>
-                                                )
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                ))
-            }
-        </div>
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">I like building things</h2>
+        <p class="text-lg text-base-content/70">
+            During my time at university, I completed several project-based modules with concrete deliverables. I
+            like to showcase some of this work here. A few projects are older, and there are many things I would
+            approach differently today, so please don’t be too critical 🙂
+        </p>
     </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {sortedHackathons.map((hackathon) => (
+        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <time class="text-sm text-base-content/60">
+                    {formatPeriod(hackathon.data.startDate, hackathon.data.endDate)}
+                  </time>
+
+                  <span class="badge badge-sm badge-outline text-primary font-semibold">
+                    {hackathon.data.level}
+                  </span>
+                </div>
+
+                <h3 class="card-title mt-1">{hackathon.data.title}</h3>
+                <p class="text-sm text-primary font-semibold">
+                  {hackathon.data.module}
+                </p>
+                <p class="text-base-content/80 mt-3">
+                  {hackathon.data.description}
+                </p>
+                <div class="card-actions justify-end mt-4 gap-2">
+                  {hackathon.data.sourceLink && (
+                          <a href={hackathon.data.sourceLink}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             class="btn btn-sm btn-outline btn-primary gap-1">
+                              Source
+                          </a>)}
+
+                  {hackathon.data.demoLink && (
+                          <a href={hackathon.data.demoLink}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             class="btn btn-sm btn-primary gap-1">
+                      Demo
+                  </a>)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>))}
+    </div>
+  </div>
 </section>
