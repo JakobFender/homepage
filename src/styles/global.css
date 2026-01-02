@@ -1,7 +1,22 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, synthwave, retro, valentine, dim;
-};
+  themes: light --default, dark --prefersdark;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  color-scheme: dark;
+  --color-primary: rgb(0 166 234);
+  --color-accent: rgb(0 211 144);
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  color-scheme: light;
+  default: true;
+  --color-primary: rgb(0 166 234);
+  --color-accent: rgb(0 171 104);
+}
 
 p, figcaption {
   text-align: justify;
