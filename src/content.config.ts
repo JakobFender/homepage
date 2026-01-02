@@ -42,9 +42,9 @@ const projects = defineCollection({
   }),
 });
 
-// Hackathons collection
-const hackathons = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/hackathons" }),
+// Repositories collection
+const repositories = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/repositories" }),
   schema: z.object({
     title: z.string(),
     level: z.string(),
@@ -61,5 +61,5 @@ export const collections = {
   work,
   education,
   projects,
-  hackathons
+  repositories
 };
