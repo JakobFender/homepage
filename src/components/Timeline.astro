@@ -129,26 +129,35 @@ const entriesWithContent = await Promise.all(
           {entriesWithContent.map(({ entry, Content }, index) => (
             <li class="border-b hover:opacity-85 transition-opacity border-base-300 last:border-b-0">
               <details class="collapse">
-                <summary class="collapse-title pe-5">
-                  <div class="list-row p-0 items-center after:hidden">
-                    <div>
+                <summary class="collapse-title pe-5 text-left">
+                  <div class="flex flex-col gap-2 w-full sm:flex-row sm:items-center">
+
+                    {/* Mobile row: logo + date */}
+                    <div class="flex items-center w-full sm:w-auto sm:order-none">
                       {entry.data.logo && (
-                        <div class="avatar">
-                          <div class="w-10 mask mask-squircle">
-                            <img src={entry.data.logo} alt={entry.data.title} />
+                          <div class="avatar shrink-0">
+                            <div class="w-10 mask mask-squircle">
+                              <img src={entry.data.logo} alt={entry.data.title} />
+                            </div>
                           </div>
-                        </div>
                       )}
+
+                      {/* Mobile-only date */}
+                      <div class="ml-auto text-sm text-base-content/70 font-mono sm:hidden">
+                        {formatPeriod(entry.data.startDate, entry.data.endDate)}
+                      </div>
                     </div>
 
-                    <div>
+                    {/* Title + subtitle */}
+                    <div class="w-full sm:ml-4">
                       <h3 class="font-bold text-lg">{entry.data.title}</h3>
                       <p class={`text-${color} font-semibold text-sm`}>
                         {entry.data.subtitle}
                       </p>
                     </div>
 
-                    <div class="text-sm text-base-content/70 font-mono whitespace-nowrap">
+                    {/* Desktop-only date */}
+                    <div class="hidden sm:block text-sm text-base-content/70 font-mono sm:ml-auto whitespace-nowrap">
                       {formatPeriod(entry.data.startDate, entry.data.endDate)}
                     </div>
                   </div>
