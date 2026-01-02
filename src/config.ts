@@ -47,8 +47,6 @@ export interface ExtraLinks {
  * Control which sections appear on the index page
  */
 export interface SectionsConfig {
-  /** Show/hide About section */
-  about: boolean;
   /** Show/hide Projects section */
   projects: boolean;
   /** Show/hide Work section */
@@ -125,11 +123,9 @@ export const siteConfig: SiteConfig = {
     ],
   },
   sections: {
-    about: false,
     work: true,
     education: true,
     projects: true,
-    blog: false,
     hackathons: true,
     contact: true,
   },

@@ -57,23 +57,9 @@ const hackathons = defineCollection({
   }),
 });
 
-// Blog collection
-const blog = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/blog" }),
-  schema: ({ image }) => z.object({
-    title: z.string(),
-    description: z.string(),
-    image: image(),
-    publishDate: z.coerce.date(),
-    updatedDate: z.coerce.date().optional(),
-    tags: z.array(z.string()).optional(),
-  }),
-});
-
 export const collections = {
   work,
   education,
   projects,
-  hackathons,
-  blog,
+  hackathons
 };
