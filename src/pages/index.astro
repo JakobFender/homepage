@@ -12,9 +12,6 @@ import { getEntry, render } from "astro:content";
 import { siteConfig } from "../config";
 import bloomfolioLogo from "../assets/bloomfolio.jpg";
 
-// Load about content
-const aboutEntry = await getEntry("about", "about");
-const { Content: AboutContent } = await render(aboutEntry);
 ---
 
 <Layout
@@ -31,17 +28,6 @@ const { Content: AboutContent } = await render(aboutEntry);
       location={siteConfig.location}
       socialLinks={siteConfig.socialLinks}
     />
-
-    <!-- About Section -->
-    {
-      siteConfig.sections.about && (
-        <About
-          title={aboutEntry.data.title}
-          photo={aboutEntry.data.photo}
-          Content={AboutContent}
-        />
-      )
-    }
 
     <!-- Work Experience Section -->
     {
