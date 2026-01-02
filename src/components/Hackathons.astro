@@ -33,7 +33,7 @@ function formatPeriod(startDate: Date, endDate?: Date) {
           <div class="card-body">
             <div class="flex items-start gap-4">
               <div class="flex-1">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-2">
                   <time class="text-sm text-base-content/60">
                     {formatPeriod(hackathon.data.startDate, hackathon.data.endDate)}
                   </time>
@@ -47,10 +47,10 @@ function formatPeriod(startDate: Date, endDate?: Date) {
                 <p class="text-sm text-primary font-semibold">
                   {hackathon.data.module}
                 </p>
-                <p class="text-base-content/80 mt-3">
+                <p class="text-base-content/80 mt-4">
                   {hackathon.data.description}
                 </p>
-                <div class="card-actions justify-end mt-4 gap-2">
+                <div class="card-actions justify-end mt-6 gap-2">
                   {hackathon.data.sourceLink && (
                           <a href={hackathon.data.sourceLink}
                              target="_blank"
