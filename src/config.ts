@@ -83,6 +83,8 @@ export interface SiteConfig {
   extraLinks: ExtraLinks;
   /** Sections visibility configuration (Hero is always visible) */
   sections: SectionsConfig;
+  /** Base URL */
+  site: string;
 }
 
 /**
@@ -129,4 +131,5 @@ export const siteConfig: SiteConfig = {
     repositories: true,
     contact: true,
   },
+  site: "https://jakob-fender.ch",
 };
