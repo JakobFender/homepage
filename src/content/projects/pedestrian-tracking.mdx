@@ -1,0 +1,103 @@
+---
+title: "Drone-Based Pedestrian Tracking for City Planning"
+description: "Industry project analyzing pedestrian behavior in a public square using drone footage and computer vision."
+image: "https://api.dicebear.com/9.x/glass/svg?seed=Drone"
+startDate: "2025-02-25"
+endDate: "2025-11-30"
+skills:
+  - Computer Vision
+  - Object Detection
+  - Object Tracking
+  - PyTorch
+  - YOLO
+  - ByteTrack
+  - Drone Operation
+---
+
+import Figure from "../../components/Figure.astro";
+
+This industry project was conducted as part of my work at HSLU in collaboration with a city authority. The project was
+carried out by a small team. I was strongly involved across the full technical pipeline, from data acquisition to
+large-scale processing and analysis. Fine-tuning of the YOLO detector was performed by Teresa Windlin, who later
+continued the work as part of her bachelor thesis. The project received an award for best bachelor thesis at an industry
+event.
+
+## Problem Definition
+
+A public square was undergoing a redesign process. To support data-driven planning decisions, the city required
+objective measurements of how the space was used. The goal was to compare pedestrian behavior before and after temporary
+interventions such as potted trees and benches that outlined the future design.
+
+To achieve this, the square was recorded on multiple days in two phases: Wave 1 captured the current state, while Wave 2
+captured usage after the temporary measures were installed. The challenge was to extract reliable movement patterns from
+aerial recordings while respecting strict privacy constraints.
+
+## Solution Concept
+
+The solution is based on drone-based video analysis combined with computer vision pipelines. Each recording session
+consisted of approximately two hours of 4K video captured from a fixed aerial position.
+
+I was involved in designing the full data acquisition and processing setup, including selecting suitable drones and
+organizing a battery rotation and charging workflow to support extended recording sessions. I obtained the required
+drone license and defined a flight altitude and camera configuration that ensured individuals remained non-identifiable,
+even when directly below the drone. I also flew all four recording days, assisted by different team members, while
+maintaining consistent recording conditions across sessions.
+
+<Figure
+    src="/images/projects/pedestrian-detection/drone_40m.jpg"
+    alt="Image from drone from 40m"
+    caption="Figure 1: Aerial image of the public square in front of the HSLU campus in Rotkreuz, captured from a drone
+     at an altitude of 40 m. The perspective illustrates the typical field of view used for pedestrian detection."
+/>
+
+After recording, videos were transferred and preprocessed. Some clips required trimming due to automatic drone return.
+Frames were extracted and labeled jointly with Teresa Windlin, who then trained a custom YOLO detector.
+
+For large-scale inference, the pipeline was optimized for throughput. Around 8 hours of 4K@30 fps video were processed
+in parallel across multiple workstations. Video decoding was identified as the primary bottleneck and therefore
+performed directly on the GPU using torchcodec. High-resolution frames were evaluated using overlapping 640×640 patches,
+and inference was run via the native PyTorch model to avoid batch-size limitations of higher-level wrappers.
+
+<Figure
+    src="/images/projects/pedestrian-detection/detections_pipeline.svg"
+    alt="Diagram of detection pipeline"
+    caption="Figure 2: Overview of the processing pipeline from raw drone video to structured detection data. The input
+    video is first split into individual frames, which are then divided into overlapping patches to match the detector
+    input resolution. Each patch is processed by a YOLO-based object detector to obtain bounding boxes. The resulting
+    detections are merged and filtered using Non-Maximum Suppression (NMS) and an additional overlap-coefficient
+    step to remove duplicate and nested detections. Bounding box coordinates are subsequently transformed back into
+    the global frame reference and stored in a dataframe for downstream tracking and heatmap generation."
+/>
+
+
+Detections were then linked over time using ByteTrack. From the resulting trajectories, speed and direction were
+estimated. Pedestrians were classified as stationary if they remained within a fixed radius for a minimum duration,
+allowing individuals to switch between stationary and moving states over time.
+
+Finally, all stabilized tracks were aggregated into spatial heatmaps, aligned across recordings and waves to enable
+direct comparison.
+
+## Special Challenges
+
+Several constraints significantly shaped the project. The scale of data, consisting of many hours of high-resolution
+video, required careful parallelization and efficient implementations. Drone stability was affected by wind, moving the
+captured area within a short time frame. Strong visual variability between sunny and overcast conditions introduced
+appearance shifts between waves. Tracking robustness was limited by frequent occlusions, leading to fragmented
+trajectories and unstable derived metrics. In addition, partial observability under trees and sunshades restricted
+analysis in some areas, and the limited number of recording days prevented strong conclusions for bikes and cars.
+
+## Results
+
+The project delivered several concrete outputs for the city, including heatmaps of overall pedestrian traffic, as well
+as separate visualizations for moving and stationary pedestrians. Results were provided per day and per wave, enabling
+direct comparisons across conditions. Additional heatmaps were generated for bikes and cars, including parked positions,
+alongside aggregate statistics such as average pedestrian counts and bench usage. Together, these outputs enabled both
+qualitative and quantitative comparisons between the existing square layout and the proposed future design, supporting
+evidence-based urban planning decisions.
+
+## Outlook
+
+The project demonstrates that privacy-preserving aerial sensing combined with modern computer vision can provide
+valuable insights for city planning. Future work could focus on improving long-term tracking robustness, increasing the
+number of recording days, and extending the analysis to additional traffic participants. With more data, derived metrics
+such as dwell time and flow consistency could become statistically more reliable and actionable.
