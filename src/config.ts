@@ -55,6 +55,8 @@ export interface SectionsConfig {
   education: boolean;
   /** Show/hide Repositories section */
   repositories: boolean;
+  /** Show/hide Web demos section */
+  demos: boolean;
   /** Show/hide Contact section */
   contact: boolean;
 }
@@ -129,6 +131,7 @@ export const siteConfig: SiteConfig = {
     education: true,
     projects: true,
     repositories: true,
+    demos: true,
     contact: true,
   },
   site: "https://jakob-fender.ch",

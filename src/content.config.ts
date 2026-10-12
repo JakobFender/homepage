@@ -57,9 +57,20 @@ const repositories = defineCollection({
   }),
 });
 
+// Web demos collection
+const demos = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/demos" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    demoLink: z.string().url(),
+  }),
+});
+
 export const collections = {
   work,
   education,
   projects,
-  repositories
+  repositories,
+  demos
 };
