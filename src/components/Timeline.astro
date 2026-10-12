@@ -3,7 +3,7 @@ import { getCollection, render } from "astro:content";
 
 interface Props {
   collection: "work" | "education";
-  /** "timeline" shows every description, "list" collapses them behind the title */
+  /** "timeline" alternates entries around a vertical line, "list" collapses descriptions behind the title */
   variant: "timeline" | "list";
   /** Mono label above the headline, e.g. "01 — Work" */
   sectionLabel: string;
@@ -44,68 +44,155 @@ const entriesWithContent = await Promise.all(
 const linkLabel = collection === "work" ? "Company website" : "Institution website";
 ---
 
-<section id={collection} class="mx-auto max-w-[1080px] px-6 md:px-12 py-16 md:py-24">
+<section id={collection}>
+<div class="mx-auto max-w-[1080px] px-6 md:px-12 py-16 md:py-24">
   <div class="mb-12">
     <p class="mono-label mb-4">{sectionLabel}</p>
     <h2>{sectionTitle}</h2>
     {sectionSubtitle && <p class="text-muted mt-4 max-w-[65ch]">{sectionSubtitle}</p>}
   </div>
 
-  <ul class="border-b border-line">
-    {entriesWithContent.map(({ entry, Content }) => {
-      const header = (
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-8 w-full">
-          <time class="meta md:col-span-3 md:pt-1.5">
-            {formatPeriod(entry.data.startDate, entry.data.endDate)}
-          </time>
-          <div class="md:col-span-9 flex items-start gap-4">
-            {entry.data.logo && (
-              <img
-                src={entry.data.logo}
-                alt=""
-                class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
-              />
-            )}
-            <div class="flex-1">
-              <h3 class="group-hover:text-accent transition-colors">{entry.data.title}</h3>
-              <p class="mono-label mt-1">{entry.data.subtitle}</p>
+  {
+    variant === "timeline" ? (
+      <div class="max-w-4xl mx-auto">
+        <!-- Desktop: entries alternate around a vertical line -->
+        <ul class="hidden sm:block timeline timeline-vertical timeline-snap-icon">
+          {entriesWithContent.map(({ entry, Content }, index) => {
+            const isStart = index % 2 === 0;
+            return (
+              <li>
+                {index > 0 && <hr class="bg-line !w-px" />}
+                <div class="timeline-middle">
+                  <span class="block size-2.5 mx-3 my-2 rounded-xs bg-accent" />
+                </div>
+                <div class={`timeline-${isStart ? "start" : "end"} pt-1 mb-12 ${isStart ? "md:pr-4" : "md:pl-4"}`}>
+                  <time class={`meta block ${isStart ? "text-end" : ""}`}>
+                    {formatPeriod(entry.data.startDate, entry.data.endDate)}
+                  </time>
+                  <div class="flex items-start gap-4 mt-3">
+                    {entry.data.logo && (
+                      <img
+                        src={entry.data.logo}
+                        alt=""
+                        class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
+                      />
+                    )}
+                    <div class="flex-1 min-w-0">
+                      <h3>{entry.data.title}</h3>
+                      <p class="mono-label mt-1">{entry.data.subtitle}</p>
+                    </div>
+                  </div>
+                  <div class="mt-4 text-[15px] leading-normal">
+                    <Content />
+                  </div>
+                  {entry.data.link && (
+                    <p class="mt-4 text-[15px]">
+                      <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
+                        {linkLabel}
+                      </a>
+                    </p>
+                  )}
+                </div>
+                {index < entriesWithContent.length - 1 && <hr class="bg-line !w-px" />}
+              </li>
+            );
+          })}
+        </ul>
+
+        <!-- Mobile: single column with the line on the left -->
+        <ul class="sm:hidden flex flex-col">
+          {entriesWithContent.map(({ entry, Content }, index) => (
+            <li class="relative flex">
+              <div class="relative flex flex-col items-center mr-6">
+                <span class="block size-2.5 mt-1 rounded-xs bg-accent z-10" />
+                {index < entriesWithContent.length - 1 && (
+                  <div class="absolute top-5 bottom-2 w-px bg-line"></div>
+                )}
+              </div>
+              <div class="flex-1 min-w-0 mb-12">
+                <time class="meta block">
+                  {formatPeriod(entry.data.startDate, entry.data.endDate)}
+                </time>
+                <div class="flex items-start gap-3 mt-3">
+                  {entry.data.logo && (
+                    <img
+                      src={entry.data.logo}
+                      alt=""
+                      class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
+                    />
+                  )}
+                  <div class="flex-1 min-w-0">
+                    <h3>{entry.data.title}</h3>
+                    <p class="mono-label mt-1">{entry.data.subtitle}</p>
+                  </div>
+                </div>
+                <div class="mt-4 text-[15px] leading-normal">
+                  <Content />
+                </div>
+                {entry.data.link && (
+                  <p class="mt-4 text-[15px]">
+                    <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
+                      {linkLabel}
+                    </a>
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+    <ul class="border-b border-line">
+      {entriesWithContent.map(({ entry, Content }) => {
+        const header = (
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-8 w-full">
+            <time class="meta md:col-span-3 md:pt-1.5">
+              {formatPeriod(entry.data.startDate, entry.data.endDate)}
+            </time>
+            <div class="md:col-span-9 flex items-start gap-4">
+              {entry.data.logo && (
+                <img
+                  src={entry.data.logo}
+                  alt=""
+                  class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
+                />
+              )}
+              <div class="flex-1">
+                <h3 class="group-hover:text-accent transition-colors">{entry.data.title}</h3>
+                <p class="mono-label mt-1">{entry.data.subtitle}</p>
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
 
-      const body = (
-        <div class="grid grid-cols-1 md:grid-cols-12 md:gap-8">
-          <div class="md:col-start-4 md:col-span-9 mt-4 max-w-[65ch] text-base-content">
-            <Content />
-            {entry.data.link && (
-              <p class="mt-4 text-[15px]">
-                <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
-                  {linkLabel}
-                </a>
-              </p>
-            )}
+        const body = (
+          <div class="grid grid-cols-1 md:grid-cols-12 md:gap-8">
+            <div class="md:col-start-4 md:col-span-9 mt-4 max-w-[65ch] text-base-content">
+              <Content />
+              {entry.data.link && (
+                <p class="mt-4 text-[15px]">
+                  <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
+                    {linkLabel}
+                  </a>
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      );
+        );
 
-      return (
-        <li class="border-t border-line py-6">
-          {variant === "list" ? (
+        return (
+          <li class="border-t border-line py-6">
             <details class="group">
               <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 {header}
               </summary>
               {body}
             </details>
-          ) : (
-            <div>
-              {header}
-              {body}
-            </div>
-          )}
-        </li>
-      );
-    })}
-  </ul>
+          </li>
+        );
+      })}
+    </ul>
+    )
+  }
+</div>
 </section>
