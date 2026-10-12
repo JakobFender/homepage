@@ -17,25 +17,25 @@ const {
   description = "A modern portfolio template built with Astro and DaisyUI",
 } = Astro.props;
 
-// Subtle fade between pages
-const fadeAnimation = {
+// Custom blur-fade animation configuration
+const blurFadeAnimation = {
   old: {
-    name: "fadeOut",
-    duration: "200ms",
-    easing: "ease-out",
+    name: "blurFadeOut",
+    duration: "0.3s",
+    easing: "ease-in-out",
     fillMode: "forwards",
   },
   new: {
-    name: "fadeIn",
-    duration: "200ms",
-    easing: "ease-out",
+    name: "blurFadeIn",
+    duration: "0.3s",
+    easing: "ease-in-out",
     fillMode: "backwards",
   },
 };
 
 const pageTransition = {
-  forwards: fadeAnimation,
-  backwards: fadeAnimation,
+  forwards: blurFadeAnimation,
+  backwards: blurFadeAnimation,
 };
 
 const origin = Astro.url.origin;
@@ -51,12 +51,12 @@ const origin = Astro.url.origin;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
 
-    <!-- Fonts: Fraunces (display), Onest (body), Martian Mono (labels) -->
+    <!-- Fonts: Fraunces (headings), Onest (body), Martian Mono (mono) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..500,0..100,0..1;1,9..144,300..500,0..100,0..1&family=Onest:wght@400;500&family=Martian+Mono&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Onest:wght@400..700&family=Martian+Mono&display=swap"
     />
 
     <!-- View Transitions -->
@@ -96,28 +96,44 @@ const origin = Astro.url.origin;
         scroll-behavior: smooth;
       }
 
-      /* Initial page load fade */
-      @keyframes fadeIn {
+      /* Initial Page Load Blur-Fade Animation */
+      @keyframes pageLoadBlurFade {
         0% {
           opacity: 0;
+          filter: blur(8px);
         }
         100% {
           opacity: 1;
-        }
-      }
-
-      @keyframes fadeOut {
-        0% {
-          opacity: 1;
-        }
-        100% {
-          opacity: 0;
+          filter: blur(0px);
         }
       }
 
       html {
-        animation: fadeIn 200ms ease-out;
+        animation: pageLoadBlurFade 0.3s ease-in-out;
         animation-fill-mode: both;
+      }
+
+      /* Blur Fade View Transitions (for page-to-page navigation) */
+      @keyframes blurFadeIn {
+        0% {
+          opacity: 0;
+          filter: blur(10px);
+        }
+        100% {
+          opacity: 1;
+          filter: blur(0px);
+        }
+      }
+
+      @keyframes blurFadeOut {
+        0% {
+          opacity: 1;
+          filter: blur(0px);
+        }
+        100% {
+          opacity: 0;
+          filter: blur(10px);
+        }
       }
     </style>
   </body>

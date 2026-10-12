@@ -1,9 +1,9 @@
 ---
 interface Props {
-  skills: string[];
+  skill: string;
 }
 
-const { skills } = Astro.props;
+const { skill } = Astro.props;
 ---
 
-<p class="meta">{skills.join(" · ")}</p>
+<span class="badge badge-sm badge-soft badge-accent">{skill}</span>

@@ -12,47 +12,65 @@ function formatPeriod(startDate: Date, endDate?: Date) {
   };
   const start = startDate.toLocaleDateString("en-US", options);
   const end = endDate ? endDate.toLocaleDateString("en-US", options) : "Present";
-  return `${start} – ${end}`;
+  return `${start} - ${end}`;
 }
 ---
 
-<section id="repositories" class="mx-auto max-w-[1080px] px-6 md:px-12 py-16 md:py-24">
-  <div class="mb-12">
-    <p class="mono-label mb-4">04 — Coursework</p>
-    <h2>I like <em>building</em> things</h2>
-    <p class="text-muted mt-4 max-w-[65ch]">
-      During my time at university, I completed several project-based modules with concrete deliverables. I
-      like to showcase some of this work here. A few projects are older, and there are many things I would
-      approach differently today, so please don’t be too critical 🙂
-    </p>
-  </div>
+<section id="repositories" class="py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold mb-4">I like building things</h2>
+        <p class="text-lg text-base-content/70">
+            During my time at university, I completed several project-based modules with concrete deliverables. I
+            like to showcase some of this work here. A few projects are older, and there are many things I would
+            approach differently today, so please don’t be too critical 🙂
+        </p>
+    </div>
 
-  <ul class="border-b border-line">
-    {sortedRepositories.map((repository) => (
-      <li class="border-t border-line py-6 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-8">
-        <div class="md:col-span-3 md:pt-1.5 flex md:flex-col gap-x-3 gap-y-1">
-          <time class="meta">{formatPeriod(repository.data.startDate, repository.data.endDate)}</time>
-          <span class="meta">{repository.data.level}</span>
-        </div>
-        <div class="md:col-span-9 max-w-[65ch]">
-          <h3>{repository.data.title}</h3>
-          <p class="mono-label mt-1">{repository.data.module}</p>
-          <p class="mt-3">{repository.data.description}</p>
-          {(repository.data.sourceLink || repository.data.demoLink) && (
-            <p class="mt-4 flex gap-6 text-[15px]">
-              {repository.data.sourceLink && (
-                <a href={repository.data.sourceLink} target="_blank" rel="noopener noreferrer" class="link">
-                  Source
-                </a>
-              )}
-              {repository.data.demoLink && (
-                <a href={repository.data.demoLink} target="_blank" rel="noopener noreferrer" class="link">
-                  Demo
-                </a>
-              )}
-            </p>
-          )}
-        </div>
-      </li>))}
-  </ul>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {sortedRepositories.map((repository) => (
+        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-start gap-4">
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-2">
+                  <time class="text-sm text-base-content/60">
+                    {formatPeriod(repository.data.startDate, repository.data.endDate)}
+                  </time>
+
+                  <span class="badge badge-sm badge-outline text-primary font-semibold">
+                    {repository.data.level}
+                  </span>
+                </div>
+
+                <h3 class="card-title mt-1">{repository.data.title}</h3>
+                <p class="text-sm text-primary font-semibold">
+                  {repository.data.module}
+                </p>
+                <p class="text-base-content/80 mt-4">
+                  {repository.data.description}
+                </p>
+                <div class="card-actions justify-end mt-6 gap-2">
+                  {repository.data.sourceLink && (
+                          <a href={repository.data.sourceLink}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             class="btn btn-sm btn-outline btn-primary gap-1">
+                              Source
+                          </a>)}
+
+                  {repository.data.demoLink && (
+                          <a href={repository.data.demoLink}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             class="btn btn-sm btn-primary gap-1">
+                      Demo
+                  </a>)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>))}
+    </div>
+  </div>
 </section>
