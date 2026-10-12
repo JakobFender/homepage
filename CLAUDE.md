@@ -45,7 +45,7 @@ The styling architecture uses Tailwind CSS 4.x with the new CSS-first configurat
 2. The Tailwind Vite plugin is configured in `astro.config.mjs`
 3. DaisyUI components are available project-wide through the plugin system
 4. Component-scoped styles can be added in `<style>` tags within `.astro` files
-5. Visual design (colors, fonts, spacing, components) follows `docs/design-guidelines.md`. Theme tokens live in `src/styles/global.css`; use `.mono-label` for olive mono labels, `.meta` for muted mono metadata and `.link` for text links. Exception: the work experience timeline (`variant="timeline"` in `Timeline.astro`) intentionally keeps the original card timeline design
+5. Visual design (colors, fonts, spacing, components) follows `docs/design-guidelines.md`. Theme tokens live in `src/styles/global.css`; use `.mono-label` for olive mono labels, `.meta` for muted mono metadata and `.link` for text links. Exception: work experience (`variant="timeline"` in `Timeline.astro`) keeps the alternating timeline layout, styled flat without cards
 
 ### Project Structure
 

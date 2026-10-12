@@ -1,10 +1,9 @@
 ---
 import { getCollection, render } from "astro:content";
-import { Briefcase } from "@lucide/astro";
 
 interface Props {
   collection: "work" | "education";
-  /** "timeline" is the original card timeline, "list" collapses descriptions behind the title */
+  /** "timeline" alternates entries around a vertical line, "list" collapses descriptions behind the title */
   variant: "timeline" | "list";
   /** Mono label above the headline, e.g. "01 — Work" */
   sectionLabel: string;
@@ -34,18 +33,6 @@ function formatPeriod(startDate: Date, endDate?: Date) {
   return `${start} – ${end}`;
 }
 
-function formatPeriodShort(startDate: Date, endDate?: Date) {
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    year: "numeric",
-  };
-  const start = startDate.toLocaleDateString("en-US", options);
-  const end = endDate
-    ? endDate.toLocaleDateString("en-US", options)
-    : "Present";
-  return `${start} - ${end}`;
-}
-
 // Render markdown content for each entry
 const entriesWithContent = await Promise.all(
   sortedEntries.map(async (entry) => {
@@ -57,7 +44,7 @@ const entriesWithContent = await Promise.all(
 const linkLabel = collection === "work" ? "Company website" : "Institution website";
 ---
 
-<section id={collection} class={variant === "timeline" ? "bg-base-200" : ""}>
+<section id={collection}>
 <div class="mx-auto max-w-[1080px] px-6 md:px-12 py-16 md:py-24">
   <div class="mb-12">
     <p class="mono-label mb-4">{sectionLabel}</p>
@@ -68,122 +55,91 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
   {
     variant === "timeline" ? (
       <div class="max-w-4xl mx-auto">
-          <div class="hidden sm:block">
-            <ul class="timeline timeline-vertical timeline-snap-icon">
-            {entriesWithContent.map(({ entry, Content }, index) => (
+        <!-- Desktop: entries alternate around a vertical line -->
+        <ul class="hidden sm:block timeline timeline-vertical timeline-snap-icon">
+          {entriesWithContent.map(({ entry, Content }, index) => {
+            const isStart = index % 2 === 0;
+            return (
               <li>
-                {index > 0 && <hr class="bg-base-100" />}
+                {index > 0 && <hr class="bg-line !w-px" />}
                 <div class="timeline-middle">
-                  <Briefcase class={"size-5 text-primary mx-3 my-1"} />
+                  <span class="block size-2.5 mx-3 my-2 rounded-xs bg-accent" />
                 </div>
-                <div
-                  class={`timeline-${index % 2 === 0 ? "start" : "end"} pt-3 mb-10`}
-                >
-                  <time
-                    class={`font-mono text-sm text-base-content/70 block italic ${index % 2 === 0 ? "text-end" : ""}`}
-                  >
-                    {formatPeriodShort(entry.data.startDate, entry.data.endDate)}
+                <div class={`timeline-${isStart ? "start" : "end"} pt-1 mb-12 ${isStart ? "md:pr-4" : "md:pl-4"}`}>
+                  <time class={`meta block ${isStart ? "text-end" : ""}`}>
+                    {formatPeriod(entry.data.startDate, entry.data.endDate)}
                   </time>
-                  <div class="card bg-base-100 shadow-xl mt-2 rounded-lg">
-                    <div class="card-body">
-                      <div class="flex items-center gap-4 mb-2">
-                        {entry.data.logo && (
-                          <div class="avatar">
-                            <div class="w-12 mask mask-squircle">
-                              <img src={entry.data.logo} alt={entry.data.title} />
-                            </div>
-                          </div>
-                        )}
-                        <div>
-                          <h3 class="card-title">{entry.data.title}</h3>
-                          <p class={"text-primary font-semibold"}>
-                            {entry.data.subtitle}
-                          </p>
-                        </div>
-                      </div>
-                      <div class="prose prose-sm max-w-none text-base-content/80 [&_p]:text-justify [&_p]:hyphens-auto">
-                        <Content />
-                      </div>
-                      {entry.data.link && (
-                        <div class="card-actions justify-end mt-4">
-                          <a
-                            href={entry.data.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="hover:underline underline-offset-3"
-                          >
-                            {collection === "work"
-                              ? "View Company"
-                              : "View Institution"}
-                          </a>
-                        </div>
-                      )}
+                  <div class="flex items-start gap-4 mt-3">
+                    {entry.data.logo && (
+                      <img
+                        src={entry.data.logo}
+                        alt=""
+                        class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
+                      />
+                    )}
+                    <div class="flex-1 min-w-0">
+                      <h3>{entry.data.title}</h3>
+                      <p class="mono-label mt-1">{entry.data.subtitle}</p>
                     </div>
+                  </div>
+                  <div class="mt-4 text-[15px] leading-normal">
+                    <Content />
+                  </div>
+                  {entry.data.link && (
+                    <p class="mt-4 text-[15px]">
+                      <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
+                        {linkLabel}
+                      </a>
+                    </p>
+                  )}
+                </div>
+                {index < entriesWithContent.length - 1 && <hr class="bg-line !w-px" />}
+              </li>
+            );
+          })}
+        </ul>
+
+        <!-- Mobile: single column with the line on the left -->
+        <ul class="sm:hidden flex flex-col">
+          {entriesWithContent.map(({ entry, Content }, index) => (
+            <li class="relative flex">
+              <div class="relative flex flex-col items-center mr-6">
+                <span class="block size-2.5 mt-1 rounded-xs bg-accent z-10" />
+                {index < entriesWithContent.length - 1 && (
+                  <div class="absolute top-5 bottom-2 w-px bg-line"></div>
+                )}
+              </div>
+              <div class="flex-1 min-w-0 mb-12">
+                <time class="meta block">
+                  {formatPeriod(entry.data.startDate, entry.data.endDate)}
+                </time>
+                <div class="flex items-start gap-3 mt-3">
+                  {entry.data.logo && (
+                    <img
+                      src={entry.data.logo}
+                      alt=""
+                      class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
+                    />
+                  )}
+                  <div class="flex-1 min-w-0">
+                    <h3>{entry.data.title}</h3>
+                    <p class="mono-label mt-1">{entry.data.subtitle}</p>
                   </div>
                 </div>
-                {index < entriesWithContent.length - 1 && (
-                  <hr class="bg-base-100" />
+                <div class="mt-4 text-[15px] leading-normal">
+                  <Content />
+                </div>
+                {entry.data.link && (
+                  <p class="mt-4 text-[15px]">
+                    <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
+                      {linkLabel}
+                    </a>
+                  </p>
                 )}
-              </li>
-            ))}
-          </ul>
-          </div>
-          <!-- Mobile -->
-          <div class="sm:hidden">
-            <ul class="flex flex-col relative">
-              {entriesWithContent.map(({ entry, Content }, index) => (
-                <li class="relative flex">
-                  {/* Timeline column */}
-                  <div class="relative flex flex-col items-center mr-6">
-                      <Briefcase class={"size-5 text-primary z-10 bg-base-200"} />
-
-                      {index < entriesWithContent.length - 1 && (
-                        <div class="absolute top-6 bottom-2 w-1 bg-base-100 rounded"></div>
-                      )}
-                  </div>
-
-                  {/* Content column */}
-                  <div class="flex flex-col flex-1 gap-2 mb-10">
-                    <time class="font-mono text-sm text-base-content/70 italic">
-                      {formatPeriodShort(entry.data.startDate, entry.data.endDate)}
-                    </time>
-
-                    <div class="card bg-base-100 shadow flex-1 rounded-lg">
-                      <div class="card-body">
-                        <div class="flex items-center gap-3 mb-2">
-                          {entry.data.logo && (
-                            <div class="avatar">
-                              <div class="w-10 mask mask-squircle">
-                                <img src={entry.data.logo} alt={entry.data.title} />
-                              </div>
-                            </div>
-                          )}
-                          <div>
-                            <h3 class="font-bold">{entry.data.title}</h3>
-                            <p class={"text-primary font-semibold text-sm"}>
-                              {entry.data.subtitle}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div class="prose prose-sm max-w-none text-base-content/80 [&_p]:text-justify [&_p]:hyphens-auto">
-                          <Content />
-                        </div>
-
-                        {entry.data.link && (
-                          <div class="flex justify-end mt-2">
-                            <a href={entry.data.link} class="hover:underline underline-offset-3">
-                              {collection === "work" ? "View Company" : "View Institution"}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     ) : (
     <ul class="border-b border-line">
