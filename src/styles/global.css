@@ -64,7 +64,8 @@
   --color-line: #D9D6CD;
 
   --font-sans: "Onest", system-ui, sans-serif;
-  --font-display: "Fraunces", serif;
+  --font-display: "Besley", Georgia, serif;
+  --font-name: "Petrona", Georgia, serif;
   --font-mono: "Martian Mono", ui-monospace, monospace;
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -101,19 +102,19 @@
   h1,
   h2 {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    font-variation-settings: "SOFT" 100, "WONK" 1;
+    font-weight: 500;
+    font-style: normal;
+    letter-spacing: -0.01em;
   }
 
   h1 {
     font-size: 36px;
-    line-height: 1.05;
+    line-height: 1.1;
   }
 
   h2 {
     font-size: 28px;
-    line-height: 1.1;
+    line-height: 1.15;
   }
 
   @media (min-width: 768px) {
@@ -126,9 +127,21 @@
     }
   }
 
+  /* No emphasis inside headings; the hero first name is the only highlight */
   h1 em,
-  h2 em {
+  h2 em,
+  h1 i,
+  h2 i {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: inherit;
+    color: inherit;
+  }
+
+  h1 .name {
+    font-family: var(--font-name);
     font-style: italic;
+    font-weight: 800;
     color: var(--color-accent);
   }
 
