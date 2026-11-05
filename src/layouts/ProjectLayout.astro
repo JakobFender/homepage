@@ -86,7 +86,7 @@ function calculateDuration(startDate: Date, endDate?: Date) {
         {!endDate && <span class="mono-label"> · Ongoing</span>}
       </p>
       <h1 class="mb-6">{title}</h1>
-      <p class="max-w-[65ch] mb-6">{description}</p>
+      <p class="mb-6">{description}</p>
       {skills && skills.length > 0 && (
         <div class="mb-8">
           <SkillBadge skills={skills} />
@@ -142,13 +142,6 @@ function calculateDuration(startDate: Date, endDate?: Date) {
   .prose-content {
     color: inherit;
     line-height: 1.6;
-  }
-
-  .prose-content > p,
-  .prose-content > ul,
-  .prose-content > ol,
-  .prose-content > blockquote {
-    max-width: 65ch;
   }
 
   .prose-content h1,

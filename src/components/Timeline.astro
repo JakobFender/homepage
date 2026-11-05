@@ -49,7 +49,7 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
   <div class="mb-12">
     <p class="mono-label mb-4">{sectionLabel}</p>
     <h2>{sectionTitle}</h2>
-    {sectionSubtitle && <p class="text-muted mt-4 max-w-[65ch]">{sectionSubtitle}</p>}
+    {sectionSubtitle && <p class="text-muted mt-4">{sectionSubtitle}</p>}
   </div>
 
   {
@@ -136,7 +136,7 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
 
         const body = (
           <div class="grid grid-cols-1 md:grid-cols-12 md:gap-8">
-            <div class="md:col-start-4 md:col-span-9 mt-4 max-w-[65ch] text-base-content">
+            <div class="md:col-start-4 md:col-span-9 mt-4 text-base-content">
               <Content />
               {entry.data.link && (
                 <p class="mt-4 text-[15px]">

@@ -82,7 +82,7 @@ The first name "Jakob" in the hero heading is the **only** highlighted word on t
 - **Two weights per font at most.** Never use bold 700+ in Onest.
 - **No italics anywhere** except the highlighted first name.
 - **Sentence case everywhere**, except optionally the mono labels.
-- **Line length:** keep body text to about 65 characters (`max-width: 65ch`).
+- **Line length:** body text spans the full width of its column (no 65ch cap).
 - **Separators in mono lists:** use ` · ` (middle dot), for example "PyTorch · Deep Learning · Knowledge Distillation".
 - **Section labels pattern:** a number and a name in Martian Mono in olive, above the section heading, for example "01 — Work" above "Work experience".
 
@@ -90,7 +90,7 @@ The first name "Jakob" in the hero heading is the **only** highlighted word on t
 
 - **Keep the existing site layout.** The rules below describe its rhythm; they are not a reason to restructure it.
 - **Spacing scale (4px base):** 4, 8, 12, 16, 24, 32, 48, 64, 96, 128px. Use only these values.
-- **Content width:** max 1080px, centered. Text columns max 65ch.
+- **Content width:** max 1080px, centered. Text fills its column.
 - **Side padding:** 24px on mobile, 48px on desktop.
 - **Section spacing:** 96–128px between major sections on desktop, 64px on mobile.
 - **Whitespace is the main separator.** Use 1px `--color-line` rules for lists and section breaks instead of boxes or cards.
