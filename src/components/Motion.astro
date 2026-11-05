@@ -1,0 +1,119 @@
+---
+// Client-side motion: scroll reveals, the growing work timeline line and smooth <details>.
+// Styling lives in global.css; everything here is skipped under prefers-reduced-motion.
+---
+
+<script>
+  const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let revealObserver: IntersectionObserver | undefined;
+  let stopRevealSweep: (() => void) | undefined;
+  let stopLine: (() => void) | undefined;
+
+  // Fade elements up once as they enter the viewport. Elements that enter together are staggered.
+  function setUpReveal() {
+    revealObserver?.disconnect();
+    const targets = document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-visible)");
+    if (reduceMotion() || !("IntersectionObserver" in window)) {
+      targets.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+    revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        let batch = 0;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const el = entry.target as HTMLElement;
+          el.style.setProperty("--reveal-delay", `${Math.min(batch, 5) * 80}ms`);
+          el.classList.add("is-visible");
+          observer.unobserve(el);
+          batch++;
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px" }
+    );
+    targets.forEach((el) => revealObserver!.observe(el));
+
+    // A fast jump (anchor link, End key) can skip elements without them ever intersecting.
+    // Reveal anything that is already above the viewport so it is not hidden when scrolling back.
+    stopRevealSweep?.();
+    let frame = 0;
+    const sweep = () => {
+      frame = 0;
+      document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-visible)").forEach((el) => {
+        if (el.getBoundingClientRect().bottom < 0) {
+          el.classList.add("is-visible");
+          revealObserver?.unobserve(el);
+        }
+      });
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(sweep);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    stopRevealSweep = () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }
+
+  // Grow the work timeline's line downward as the section scrolls through the viewport.
+  function setUpTimelineLine() {
+    stopLine?.();
+    const line = document.querySelector<HTMLElement>(".tl-line");
+    if (!line || reduceMotion()) return;
+    const track = line.parentElement!;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rect = track.getBoundingClientRect();
+      const progress = (window.innerHeight * 0.8 - rect.top) / rect.height;
+      line.style.setProperty("--line-progress", String(Math.min(Math.max(progress, 0), 1)));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    stopLine = () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }
+
+  // Slide and fade <details class="smooth-details"> open and closed instead of snapping.
+  document.addEventListener("click", (event) => {
+    const summary = (event.target as Element).closest("details.smooth-details > summary");
+    if (!summary || reduceMotion()) return;
+    const details = summary.parentElement as HTMLDetailsElement;
+    const content = summary.nextElementSibling as HTMLElement | null;
+    if (!content) return;
+    event.preventDefault();
+    if (details.dataset.animating) return;
+    details.dataset.animating = "true";
+
+    const opening = !details.open;
+    if (opening) details.open = true;
+    const height = content.offsetHeight;
+    const closed = { height: "0px", opacity: 0, overflow: "hidden" };
+    const shown = { height: `${height}px`, opacity: 1, overflow: "hidden" };
+    const animation = content.animate(opening ? [closed, shown] : [shown, closed], {
+      duration: 250,
+      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      fill: "both",
+    });
+    animation.onfinish = () => {
+      if (!opening) details.open = false;
+      animation.cancel();
+      delete details.dataset.animating;
+    };
+  });
+
+  // astro:page-load fires on the first load and after every client-side navigation
+  document.addEventListener("astro:page-load", () => {
+    setUpReveal();
+    setUpTimelineLine();
+  });
+</script>

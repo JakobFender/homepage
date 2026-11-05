@@ -205,8 +205,27 @@
   text-decoration-thickness: 2px;
 }
 
+/* External links get an arrow that nudges up and right on hover */
+.link[target="_blank"]::after,
+.arrow-nudge {
+  display: inline-block;
+  transition: translate 200ms var(--ease-out);
+}
+
+/* inline-flex drops the stray whitespace around the link text so the underline ends at the text */
+.link[target="_blank"] {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+}
+
 .link[target="_blank"]::after {
-  content: " ↗";
+  content: "↗";
+}
+
+.link[target="_blank"]:hover::after,
+.group:hover .arrow-nudge {
+  translate: 2px -2px;
 }
 
 .btn {
@@ -243,6 +262,68 @@
 
 table {
   @apply table table-zebra table-sm;
+}
+
+/* ---------- Motion (all of it is skipped under prefers-reduced-motion) ---------- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero entrance: text lines one after another, then the portrait rises into place */
+  .hero-in {
+    animation: fade-up 450ms var(--ease-out) both;
+    animation-delay: var(--d, 0ms);
+  }
+
+  .hero-portrait {
+    animation: rise 600ms var(--ease-out) 250ms both;
+  }
+
+  /*
+   * Scroll reveal: Motion.astro adds .is-visible once an element enters the viewport.
+   * Only hidden when scripts run, so content never stays invisible without JavaScript.
+   */
+  @media (scripting: enabled) {
+    [data-reveal] {
+      transition:
+        opacity 450ms var(--ease-out),
+        translate 450ms var(--ease-out);
+      transition-delay: var(--reveal-delay, 0ms);
+    }
+
+    [data-reveal]:not(.is-visible) {
+      opacity: 0;
+      translate: 0 8px;
+    }
+
+    /* Work timeline markers pop in after their entry */
+    [data-reveal] .tl-marker {
+      transition: scale 250ms var(--ease-out);
+      transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
+    }
+
+    [data-reveal]:not(.is-visible) .tl-marker {
+      scale: 0;
+    }
+  }
+
+  /* Work timeline line grows downward with scroll progress (set by Motion.astro) */
+  .tl-line {
+    transform-origin: top;
+    scale: 1 var(--line-progress, 1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
