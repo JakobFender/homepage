@@ -147,6 +147,9 @@
     font-family: var(--font-name);
     font-style: italic;
     font-weight: 800;
+    /* Petrona runs smaller than Besley: 62px next to the 56px heading so the letters match in height */
+    font-size: calc(62em / 56);
+    line-height: 1;
     color: var(--color-accent);
   }
 
