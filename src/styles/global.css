@@ -99,6 +99,11 @@
     }
   }
 
+  p {
+    text-align: justify;
+    hyphens: auto;
+  }
+
   h1,
   h2 {
     font-family: var(--font-display);
