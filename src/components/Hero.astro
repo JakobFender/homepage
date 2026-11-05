@@ -20,7 +20,7 @@ interface Props {
 
 const { name, title, description, avatar, location, socialLinks } = Astro.props;
 
-// Emphasize the first name: one olive italic word per headline
+// The first name is the only highlighted word on the site
 const [firstName, ...restOfName] = name.split(" ");
 
 const socialLabels: Record<string, string> = {
@@ -43,7 +43,7 @@ const links = Object.entries(socialLinks ?? {}).filter(
     <div class="md:col-span-8 order-2 md:order-1">
       <p class="mono-label mb-6">{title}</p>
       <h1 class="mb-6">
-        Hi, I'm <em>{firstName}</em>{restOfName.length > 0 && ` ${restOfName.join(" ")}`}.
+        Hi, I'm <em class="name">{firstName}</em>{restOfName.length > 0 && ` ${restOfName.join(" ")}`}.
       </h1>
       <p class="max-w-[65ch] mb-4">{description}</p>
       {location && <p class="meta mb-8">{location}</p>}
