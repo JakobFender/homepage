@@ -98,7 +98,7 @@ export const siteConfig: SiteConfig = {
   title: "Research Assistant in AI & ML",
   description:
     "I work as an AI Research Assistant, focusing on model efficiency, knowledge distillation, and representation learning in the audio domain. My work combines applied research with strong engineering practices.",
-  avatar: "../assets/profile.jpg",
+  avatar: "../assets/profile.png",
   location: "🇨🇭 Lucerne, Switzerland",
   email: "fender.jakob@gmail.com",
   socialLinks: {
