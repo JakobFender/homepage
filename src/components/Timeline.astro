@@ -55,65 +55,34 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
   {
     variant === "timeline" ? (
       <div class="max-w-4xl mx-auto">
-        <!-- Desktop: entries alternate around a vertical line -->
-        <ul class="hidden sm:block timeline timeline-vertical timeline-snap-icon">
+        <!--
+          Mobile: one column with the line on the left.
+          sm and up: entries alternate around a center line. Each entry spans two grid rows,
+          starting one row after the previous entry, so neighbours overlap by about half.
+          Each marker sits on the line at the height of its entry's title.
+        -->
+        <ol class="relative grid grid-cols-1 sm:grid-cols-2 sm:gap-x-16">
+          <div aria-hidden="true" class="absolute top-0 bottom-0 left-[5px] sm:left-1/2 w-px bg-line"></div>
           {entriesWithContent.map(({ entry, Content }, index) => {
             const isStart = index % 2 === 0;
             return (
-              <li>
-                {index > 0 && <hr class="bg-line !w-px" />}
-                <div class="timeline-middle">
-                  <span class="block size-2.5 mx-3 my-2 rounded-xs bg-accent" />
-                </div>
-                <div class={`timeline-${isStart ? "start" : "end"} pt-1 mb-12 ${isStart ? "md:pr-4" : "md:pl-4"}`}>
-                  <time class={`meta block ${isStart ? "text-end" : ""}`}>
-                    {formatPeriod(entry.data.startDate, entry.data.endDate)}
-                  </time>
-                  <div class="flex items-start gap-4 mt-3">
-                    {entry.data.logo && (
-                      <img
-                        src={entry.data.logo}
-                        alt=""
-                        class="size-10 shrink-0 object-contain rounded-xs border border-line bg-base-100"
-                      />
-                    )}
-                    <div class="flex-1 min-w-0">
-                      <h3>{entry.data.title}</h3>
-                      <p class="text-muted mt-1">{entry.data.subtitle}</p>
-                    </div>
-                  </div>
-                  <div class="mt-4 text-[15px] leading-normal">
-                    <Content />
-                  </div>
-                  {entry.data.link && (
-                    <p class="mt-4 text-[15px]">
-                      <a href={entry.data.link} target="_blank" rel="noopener noreferrer" class="link">
-                        {linkLabel}
-                      </a>
-                    </p>
-                  )}
-                </div>
-                {index < entriesWithContent.length - 1 && <hr class="bg-line !w-px" />}
-              </li>
-            );
-          })}
-        </ul>
-
-        <!-- Mobile: single column with the line on the left -->
-        <ul class="sm:hidden flex flex-col">
-          {entriesWithContent.map(({ entry, Content }, index) => (
-            <li class="relative flex">
-              <div class="relative flex flex-col items-center mr-6">
-                <span class="block size-2.5 mt-1 rounded-xs bg-accent z-10" />
-                {index < entriesWithContent.length - 1 && (
-                  <div class="absolute top-5 bottom-2 w-px bg-line"></div>
-                )}
-              </div>
-              <div class="flex-1 min-w-0 mb-12">
-                <time class="meta block">
+              <li
+                class={`relative pl-8 sm:pl-0 pb-12 sm:pb-8 sm:[grid-row:var(--row)/span_2] ${isStart ? "sm:col-start-1" : "sm:col-start-2"}`}
+                style={`--row: ${index + 1}`}
+              >
+                <time class={`meta block ${isStart ? "sm:text-end" : ""}`}>
                   {formatPeriod(entry.data.startDate, entry.data.endDate)}
                 </time>
-                <div class="flex items-start gap-3 mt-3">
+                <div class="relative flex items-start gap-4 mt-3">
+                  {/* Marker on the line, centered on the first line of the title */}
+                  <span
+                    aria-hidden="true"
+                    class={`absolute top-3 sm:top-[13px] -left-8 -translate-y-1/2 size-2.5 rounded-xs bg-accent ${
+                      isStart
+                        ? "sm:left-auto sm:-right-8 sm:translate-x-1/2"
+                        : "sm:-translate-x-1/2"
+                    }`}
+                  />
                   {entry.data.logo && (
                     <img
                       src={entry.data.logo}
@@ -123,7 +92,7 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
                   )}
                   <div class="flex-1 min-w-0">
                     <h3>{entry.data.title}</h3>
-                    <p class="text-muted mt-1">{entry.data.subtitle}</p>
+                    <p class="text-muted text-left mt-1">{entry.data.subtitle}</p>
                   </div>
                 </div>
                 <div class="mt-4 text-[15px] leading-normal">
@@ -136,10 +105,10 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
                     </a>
                   </p>
                 )}
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            );
+          })}
+        </ol>
       </div>
     ) : (
     <ul class="border-b border-line">
@@ -159,7 +128,7 @@ const linkLabel = collection === "work" ? "Company website" : "Institution websi
               )}
               <div class="flex-1">
                 <h3 class="group-hover:text-primary transition-colors">{entry.data.title}</h3>
-                <p class="text-muted mt-1">{entry.data.subtitle}</p>
+                <p class="text-muted text-left mt-1">{entry.data.subtitle}</p>
               </div>
             </div>
           </div>
