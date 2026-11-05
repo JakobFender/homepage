@@ -23,16 +23,20 @@ function formatPeriod(startDate: Date, endDate?: Date) {
 ---
 
 <article class="group flex flex-col">
-  <a href={`/projects/${project.id}`} class="block">
-    <Image
-      src={project.data.image}
-      alt={project.data.title}
-      class="w-full aspect-video object-cover rounded-xs border border-line"
-      width={600}
-      height={400}
-    />
-  </a>
-  <time class="meta mt-4">
+  {
+    project.data.image && (
+      <a href={`/projects/${project.id}`} class="block mb-4">
+        <Image
+          src={project.data.image}
+          alt={project.data.title}
+          class="w-full aspect-video object-cover rounded-xs border border-line"
+          width={600}
+          height={400}
+        />
+      </a>
+    )
+  }
+  <time class="meta">
     {formatPeriod(project.data.startDate, project.data.endDate)}
   </time>
   <h3 class="mt-2">
