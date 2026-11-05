@@ -4,6 +4,7 @@ import "katex/dist/katex.min.css"
 import ThemeToggle from "../components/ThemeToggle.astro";
 import ThemeSelector from "../components/ThemeSelector.astro";
 import FabFlower from "../components/FabFlower.astro";
+import Motion from "../components/Motion.astro";
 import { ClientRouter } from "astro:transitions";
 import { siteConfig } from "../config";
 
@@ -83,6 +84,8 @@ const origin = Astro.url.origin;
     </div>
 
     <slot />
+
+    <Motion />
 
     {
       siteConfig.extraLinks.enable && (

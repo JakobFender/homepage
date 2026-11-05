@@ -33,8 +33,15 @@
     const target = e.target;
     if (target.classList.contains('theme-controller')) {
       const theme = target.checked ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', theme);
+      const apply = () => document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
+      // Crossfade between themes where the View Transitions API exists
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (document.startViewTransition && !reduceMotion) {
+        document.startViewTransition(apply);
+      } else {
+        apply();
+      }
     }
   });
 
