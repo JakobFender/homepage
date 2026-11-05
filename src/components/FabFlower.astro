@@ -9,25 +9,25 @@ interface Props {
 const { extraLinks } = Astro.props;
 ---
 
-<div class="fab fab-flower">
+<div class="fab fab-jump">
   <!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
-  <div class="tooltip tooltip-top" data-tip="More links">
+  <div class="tooltip tooltip-left relative z-10" data-tip="More links">
     <div tabindex="0" role="button" class="btn btn-lg btn-primary btn-square">
       <Link class="size-6" />
     </div>
   </div>
 
   <!-- Main Action button replaces the original button when FAB is open -->
-  <div class="fab-close">
+  <div class="fab-close z-10">
     Close <span class="btn btn-square btn-lg btn-outline bg-base-100">✕</span>
   </div>
 
-  <!-- buttons that show up when FAB is open -->
+  <!-- Links that jump up out of the button when the FAB is open, one after another -->
   {
-    extraLinks.links.map((link) => {
+    extraLinks.links.map((link, index) => {
       const IconComponent = link.icon;
       return (
-        <div class="tooltip tooltip-left" data-tip={link.label}>
+        <div class="fab-item tooltip tooltip-left" data-tip={link.label} style={`--i: ${index + 1}`}>
           <a href={link.link} class="btn btn-lg btn-square btn-outline bg-base-100">
             <IconComponent class="size-5" />
           </a>
@@ -36,3 +36,28 @@ const { extraLinks } = Astro.props;
     })
   }
 </div>
+
+<style>
+  /*
+   * Closed: every link sits hidden behind the button (shifted down by its distance to it).
+   * Open: links slide up into a vertical stack, nearest first.
+   * Step = button height (3rem) + gap (0.5rem).
+   */
+  .fab-jump > .fab-item {
+    translate: 0 calc(var(--i) * 3.5rem);
+    transition-property: opacity, scale, visibility, translate;
+    transition-duration: 250ms;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc((var(--i) - 1) * 40ms);
+  }
+
+  .fab-jump:focus-within > .fab-item {
+    translate: 0 0;
+  }
+
+  /* While open, the "More links" tooltip would cover the Close label */
+  .fab-jump:focus-within > .tooltip:first-child::before,
+  .fab-jump:focus-within > .tooltip:first-child::after {
+    display: none;
+  }
+</style>

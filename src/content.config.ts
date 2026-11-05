@@ -33,7 +33,7 @@ const projects = defineCollection({
   schema: ({ image }) => z.object({
     title: z.string(),
     description: z.string(),
-    image: image(),
+    image: image().optional(),
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional(),
     skills: z.array(z.string()),
