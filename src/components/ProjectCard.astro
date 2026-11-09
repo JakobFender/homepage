@@ -1,4 +1,5 @@
 ---
+import { url } from "../utils/url";
 import { Image } from "astro:assets";
 import SkillBadge from "./SkillBadge.astro";
 import type { CollectionEntry } from "astro:content";
@@ -25,7 +26,7 @@ function formatPeriod(startDate: Date, endDate?: Date) {
 <article class="group flex flex-col" data-reveal>
   {
     project.data.image && (
-      <a href={`/projects/${project.id}`} class="block mb-4">
+      <a href={url(`/projects/${project.id}`)} class="block mb-4">
         <Image
           src={project.data.image}
           alt={project.data.title}
@@ -41,7 +42,7 @@ function formatPeriod(startDate: Date, endDate?: Date) {
   </time>
   <h3 class="mt-2">
     <a
-      href={`/projects/${project.id}`}
+      href={url(`/projects/${project.id}`)}
       class="inline-flex items-baseline gap-1 group-hover:text-primary transition-colors"
     >
       {project.data.title}

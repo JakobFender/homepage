@@ -1,4 +1,5 @@
 ---
+import { url } from "../utils/url";
 import { Link } from "@lucide/astro";
 import type { ExtraLinks } from "../config";
 
@@ -28,7 +29,7 @@ const { extraLinks } = Astro.props;
       const IconComponent = link.icon;
       return (
         <div class="fab-item tooltip tooltip-left" data-tip={link.label} style={`--i: ${index + 1}`}>
-          <a href={link.link} class="btn btn-lg btn-square btn-outline bg-base-100">
+          <a href={url(link.link)} class="btn btn-lg btn-square btn-outline bg-base-100">
             <IconComponent class="size-5" />
           </a>
         </div>

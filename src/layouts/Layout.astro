@@ -7,6 +7,7 @@ import FabFlower from "../components/FabFlower.astro";
 import Motion from "../components/Motion.astro";
 import { ClientRouter } from "astro:transitions";
 import { siteConfig } from "../config";
+import { url, isRelease } from "../utils/url";
 
 interface Props {
   title?: string;
@@ -40,6 +41,11 @@ const pageTransition = {
 };
 
 const origin = Astro.url.origin;
+
+// Release builds live under /release/<branch>/: point canonical at the production page
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const productionPath = Astro.url.pathname.slice(base.length) || "/";
+const releaseName = import.meta.env.PUBLIC_RELEASE_NAME;
 ---
 
 <!doctype html>
@@ -48,8 +54,9 @@ const origin = Astro.url.origin;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={url("/favicon.svg")} />
     <meta name="generator" content={Astro.generator} />
+    {isRelease && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
 
     <!-- Fonts: Besley (headings), Petrona (hero first name), Onest (body), Martian Mono (labels) -->
@@ -75,9 +82,16 @@ const origin = Astro.url.origin;
     <meta name="twitter:description" content={description} />
 
     <!-- Canonical -->
-      <link rel="canonical" href={`${siteConfig.site}${Astro.url.pathname}`} />
+      <link rel="canonical" href={`${siteConfig.site}${productionPath}`} />
   </head>
   <body class="min-h-screen">
+    {
+      isRelease && (
+        <a href={siteConfig.site} class="fixed top-4 left-4 z-50 mono-label bg-base-100 border border-line rounded-xs px-2 py-1">
+          Release preview{releaseName && `: ${releaseName}`}
+        </a>
+      )
+    }
     <!-- Theme Controls - Fixed Position -->
     <div class="fixed top-4 right-4 z-50">
       {siteConfig.enableThemeSelector ? <ThemeSelector /> : <ThemeToggle />}

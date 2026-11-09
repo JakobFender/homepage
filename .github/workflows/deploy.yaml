@@ -1,50 +1,206 @@
-name: Deploy static content to Pages
+# Builds every branch and publishes it to GitHub Pages via the gh-pages branch:
+#
+#   main            -> https://jakob-fender.ch/
+#   any other branch -> https://jakob-fender.ch/release/<branch-slug>/
+#
+# Branch slugs are lowercased with every character outside [a-z0-9._-] replaced by "-",
+# e.g. "claude/bold-euler-m753z4" -> "claude-bold-euler-m753z4".
+# Release folders of deleted branches are removed on the next run.
+#
+# One-time setup: Settings -> Pages -> Source: "Deploy from a branch", branch "gh-pages", folder "/ (root)".
+
+name: Build and deploy
 
 on:
   push:
-    branches: ["main"]
+    branches-ignore: ["gh-pages"]
+  delete:
+  pull_request:
+    types: [opened, reopened]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
+  pull-requests: write
 
+# Every run rewrites gh-pages, so runs must never overlap
 concurrency:
-  group: "pages"
+  group: gh-pages
   cancel-in-progress: false
+
+env:
+  PRODUCTION_BRANCH: main
+  CUSTOM_DOMAIN: jakob-fender.ch
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-
     steps:
+      - name: Work out what to build
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT" = "delete" ]; then
+            # Nothing to build: only prune the deleted branch's folder below
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "build=true" >> "$GITHUB_OUTPUT"
+          if [ "$BRANCH" = "$PRODUCTION_BRANCH" ]; then
+            echo "production=true" >> "$GITHUB_OUTPUT"
+            echo "base=/" >> "$GITHUB_OUTPUT"
+          else
+            slug=$(printf '%s' "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g')
+            echo "production=false" >> "$GITHUB_OUTPUT"
+            echo "slug=$slug" >> "$GITHUB_OUTPUT"
+            echo "base=/release/$slug/" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.target.outputs.build == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node
+        if: steps.target.outputs.build == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Build
-        run: npm run build
+        if: steps.target.outputs.build == 'true'
+        env:
+          BASE_PATH: ${{ steps.target.outputs.base }}
+          PUBLIC_RELEASE_NAME: ${{ steps.target.outputs.production != 'true' && github.ref_name || '' }}
+        run: |
+          npm ci
+          npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Check out gh-pages
+        run: |
+          git init -q site
+          cd site
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin gh-pages; then
+            git checkout -q -b gh-pages FETCH_HEAD
+          else
+            git checkout -q --orphan gh-pages
+          fi
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      # The very first release run happens before main has ever been published to gh-pages.
+      # Build main too, so switching Pages to gh-pages never serves an empty site.
+      - name: Bootstrap production build
+        if: steps.target.outputs.build == 'true' && steps.target.outputs.production != 'true' && hashFiles('site/index.html') == ''
+        run: |
+          git fetch -q --depth 1 origin "$PRODUCTION_BRANCH"
+          git worktree add -q ../production FETCH_HEAD
+          cd ../production
+          npm ci
+          npm run build
+          cp -r dist/. "$GITHUB_WORKSPACE/site/"
+
+      - name: Copy build into gh-pages
+        if: steps.target.outputs.build == 'true'
+        env:
+          PRODUCTION: ${{ steps.target.outputs.production }}
+          SLUG: ${{ steps.target.outputs.slug }}
+        run: |
+          cd site
+          if [ "$PRODUCTION" = "true" ]; then
+            # Replace everything at the root except the release folders
+            find . -mindepth 1 -maxdepth 1 ! -name .git ! -name release -exec rm -rf {} +
+            cp -r ../dist/. .
+          else
+            rm -rf "release/$SLUG"
+            mkdir -p "release/$SLUG"
+            cp -r ../dist/. "release/$SLUG/"
+          fi
+
+      - name: Remove release folders of deleted branches
+        run: |
+          cd site
+          [ -d release ] || exit 0
+          live=$(git ls-remote --heads origin | sed 's#.*refs/heads/##' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g')
+          for dir in release/*/; do
+            slug=$(basename "$dir")
+            if ! printf '%s\n' "$live" | grep -qxF "$slug"; then
+              echo "Removing $dir"
+              rm -rf "$dir"
+            fi
+          done
+
+      - name: Publish gh-pages
+        run: |
+          cd site
+          echo "$CUSTOM_DOMAIN" > CNAME
+          touch .nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          # Keep gh-pages as a single commit so build output never piles up in the repo history
+          git checkout -q --orphan publish
+          git commit -q -m "Deploy ${{ github.event_name }} of ${{ github.ref_name }} (${{ github.sha }})"
+          git push -q --force origin publish:gh-pages
+
+      - name: Comment preview link on the pull request
+        if: steps.target.outputs.build == 'true' && steps.target.outputs.production != 'true'
+        uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ github.ref_name }}
+          PREVIEW_URL: https://${{ env.CUSTOM_DOMAIN }}${{ steps.target.outputs.base }}
         with:
-          path: ./dist
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner, repo, state: "open", head: `${owner}:${process.env.BRANCH}`,
+            });
+            const marker = "<!-- release-preview -->";
+            const body = `${marker}\n**Release preview:** ${process.env.PREVIEW_URL}\n\n` +
+              `Built from ${(context.payload.pull_request?.head.sha ?? context.sha).slice(0, 7)}. GitHub Pages may take a minute to pick up new builds.`;
+            for (const pull of pulls) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: pull.number,
+              });
+              const existing = comments.find((c) => c.body?.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pull.number, body });
+              }
+            }
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  # A PR is usually opened after the branch's first push, so the deploy job found no PR to comment on yet
+  comment-on-open:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment preview link on the pull request
+        uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ github.head_ref }}
+          PREVIEW_URL: ${{ format('https://{0}/release/', env.CUSTOM_DOMAIN) }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner, repo, state: "open", head: `${owner}:${process.env.BRANCH}`,
+            });
+            const slug = process.env.BRANCH.toLowerCase().replace(/[^a-z0-9._-]/g, "-");
+            process.env.PREVIEW_URL += `${slug}/`;
+            const marker = "<!-- release-preview -->";
+            const body = `${marker}\n**Release preview:** ${process.env.PREVIEW_URL}\n\n` +
+              `Built from ${(context.payload.pull_request?.head.sha ?? context.sha).slice(0, 7)}. GitHub Pages may take a minute to pick up new builds.`;
+            for (const pull of pulls) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: pull.number,
+              });
+              const existing = comments.find((c) => c.body?.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number: pull.number, body });
+              }
+            }

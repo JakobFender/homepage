@@ -82,6 +82,8 @@ src/
 
 4. **TypeScript**: Astro's strict TypeScript config is enabled - expect type checking on component props and imports
 
+5. **Base-path aware links**: Every branch is also published as a release build under `/release/<branch>/` (see `.github/workflows/deploy.yaml`). Never hardcode root-relative paths: wrap internal links and `public/` assets in `url()` from `src/utils/url.ts`, e.g. `href={url("/projects")}`. Test with `BASE_PATH=/release/test/ npm run build`
+
 ## Template Structure
 
 Bloomfolio is designed as a portfolio website template with the following sections and components:
