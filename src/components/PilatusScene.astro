@@ -2,8 +2,8 @@
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
 // In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
-// across the lake and a paddle steamer crosses it the other way. Aerial cable cars shuttle down the
-// right flank in two sections, from the summit to the foot of the mountain. In the foreground, the
+// across the lake and a paddle steamer crosses it the other way. An aerial cable car shuttles on five
+// posts down the right flank, from the summit to the foot of the mountain. In the foreground, the
 // covered Chapel Bridge (Kapellbrücke) crosses the water with the octagonal Water Tower behind it.
 // By day, a single-engine turboprop flies across the sky.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
@@ -32,7 +32,8 @@
   const DRIFT = 70000; // ms to cross the whole lake
   // Aerial cable car cabin: a slim hanger from the cable and a cabin two windows wide with a rounded roof
   const CABIN = ["  #  ", "  #  ", " ### ", "# # #", "#####"];
-  const RIDE = 9000; // ms from one station to the other
+  const RIDE = 16000; // ms from one station to the other
+  const POSTS = 5; // stations and pylons along the cableway
   const DWELL = 2500; // ms at each station
   // Water Tower next to the Chapel Bridge: pointed roof, timber storey with windows, stone base
   const TOWER = [
@@ -232,57 +233,61 @@
       ctx!.globalAlpha = 1;
     }
 
-    // The cableway runs in two sections: from just right of the summit to a middle station on the right
-    // flank, and from there down to a valley station at the foot of the mountain. Each cable is straight
-    // and lifted wherever needed to clear the ridge; posts carry it down to the stations.
+    // The cableway runs from just right of the summit down the right flank to a valley station near the
+    // foot of the mountain, on five posts: the two stations and three pylons spaced evenly between them.
+    // Each span is straight; posts are raised wherever needed so the cable clears the ridge.
     function cableway() {
       const { summit } = route();
       const top = summit + 12; // clear of the train at the summit
-      const descend = (from: number, depth: number) => {
-        let x = from;
-        while (x < width - 8 && crestY(x) < SKY + areaHeight() * depth) x += 2;
-        return x;
-      };
-      const middle = descend(top, 0.32);
-      const valley = descend(middle, 0.86);
-      const section = (upper: number, lower: number) => {
-        const upperY = crestDotY(upper) - 6;
-        const lowerY = crestDotY(lower) - 6;
-        const lineY = (x: number) => upperY + ((lowerY - upperY) * (x - upper)) / (lower - upper || 1);
+      let valley = top;
+      while (valley < width - 8 && crestY(valley) < SKY + areaHeight() * 0.86) valley += 2;
+      const xs = Array.from({ length: POSTS }, (_, i) => Math.round(top + ((valley - top) * i) / (POSTS - 1)));
+      const ys = xs.map((x) => crestDotY(x) - 6);
+      // How far each span must rise to stay 4px above the crest; a post takes the larger of its two spans
+      const lifts = xs.slice(1).map((lower, i) => {
+        const upper = xs[i];
         let lift = 0;
-        for (let x = upper; x <= lower; x += 2) lift = Math.max(lift, lineY(x) - (crestY(x) - 4));
-        return { upper, lower, y: (x: number) => Math.round(lineY(x) - lift) };
+        for (let x = upper; x <= lower; x += 2) {
+          const y = ys[i] + ((ys[i + 1] - ys[i]) * (x - upper)) / (lower - upper || 1);
+          lift = Math.max(lift, y - (crestY(x) - 4));
+        }
+        return lift;
+      });
+      const posts = xs.map((x, i) => ({ x, y: Math.round(ys[i] - Math.max(lifts[i - 1] ?? 0, lifts[i] ?? 0)) }));
+      // Cable height at x, along the span that contains it
+      const y = (x: number) => {
+        const i = Math.max(0, Math.min(POSTS - 2, posts.findIndex((p) => p.x >= x) - 1));
+        const [a, b] = [posts[i], posts[i + 1]];
+        return Math.round(a.y + ((b.y - a.y) * (x - a.x)) / (b.x - a.x || 1));
       };
-      return [section(top, middle), section(middle, valley)].filter((s) => s.lower - s.upper >= 20);
+      return { posts, top, valley, y };
     }
 
     function drawCableway(now: number) {
-      const base = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
-      const accent = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
-      cableway().forEach(({ upper, lower, y }, i) => {
-        // Cable and the station posts down to the crest dots
-        ctx!.fillStyle = base;
-        ctx!.globalAlpha = 0.5;
-        for (let x = upper; x <= lower; x++) ctx!.fillRect(x, y(x), 1, 1);
-        for (const x of [upper, lower]) {
-          ctx!.fillRect(x - 1, y(x), 2, crestDotY(x) - y(x));
-          ctx!.fillRect(x - 3, y(x), 6, 1);
-        }
-        // Cabin: up, wait at the top, down, wait at the bottom; the two sections run in opposite
-        // directions. Parked at the bottom of each section under reduced motion
-        const elapsed = reduceMotion ? 0 : (now + i * (RIDE + DWELL)) % (2 * (RIDE + DWELL));
-        let t = 0; // 0 at the lower station, 1 at the upper one
-        if (elapsed < RIDE) t = ease(elapsed / RIDE);
-        else if (elapsed < RIDE + DWELL) t = 1;
-        else if (elapsed < 2 * RIDE + DWELL) t = 1 - ease((elapsed - RIDE - DWELL) / RIDE);
-        // Stop a little short of the posts so the cabin waits beside them
-        const stop = (CABIN[0].length * PX) / 2 + 3;
-        const x = Math.round(lower - stop + (upper + stop - (lower - stop)) * t);
-        ctx!.fillStyle = accent;
-        ctx!.globalAlpha = 1;
-        // Hang the cabin from the cable: its carriage row sits on the cable line
-        drawSprite(CABIN, x, y(x) + (CABIN.length - 1) * PX + 1);
-      });
+      const { posts, top, valley, y } = cableway();
+      if (valley - top < 40) return;
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      // Cable, then the posts down to the crest dots with a crossbar on top
+      ctx!.globalAlpha = 0.5;
+      for (let x = top; x <= valley; x++) ctx!.fillRect(x, y(x), 1, 1);
+      for (const post of posts) {
+        ctx!.fillRect(post.x - 1, post.y, 2, crestDotY(post.x) - post.y);
+        ctx!.fillRect(post.x - 3, post.y, 6, 1);
+      }
+      // One cabin: up to the summit, wait, back down to the valley, wait; parked in the valley under
+      // reduced motion
+      const elapsed = reduceMotion ? 0 : now % (2 * (RIDE + DWELL));
+      let t = 0; // 0 at the valley station, 1 at the summit
+      if (elapsed < RIDE) t = ease(elapsed / RIDE);
+      else if (elapsed < RIDE + DWELL) t = 1;
+      else if (elapsed < 2 * RIDE + DWELL) t = 1 - ease((elapsed - RIDE - DWELL) / RIDE);
+      // Stop a little short of the station posts so the cabin waits beside them
+      const stop = (CABIN[0].length * PX) / 2 + 3;
+      const x = Math.round(valley - stop + (top + stop - (valley - stop)) * t);
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+      ctx!.globalAlpha = 1;
+      // Hang the cabin from the cable: its top row sits on the cable line
+      drawSprite(CABIN, x, y(x) + (CABIN.length - 1) * PX + 1);
     }
 
     // The Chapel Bridge runs out from the left shore on trestles, the Water Tower stands just behind it.
