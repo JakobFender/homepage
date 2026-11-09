@@ -35,31 +35,47 @@
   const RIDE = 16000; // ms from one station to the other
   const POSTS = 5; // stations and pylons along the cableway
   const DWELL = 2500; // ms at each station
-  // Water Tower next to the Chapel Bridge: pointed roof, timber storey with windows, stone base
+  // Water Tower next to the Chapel Bridge: r steep pointed roof whose eave reaches past the timber storey,
+  // w plain timber storey overhanging the stone, # octagonal stone tower with a small window near the top
   const TOWER = [
-    "     #     ",
-    "     #     ",
-    "    ###    ",
-    "    ###    ",
-    "   #####   ",
-    "   #####   ",
-    "  #######  ",
-    "  #######  ",
-    " ######### ",
-    "###########",
-    " ######### ",
-    " # # # # # ",
-    " ######### ",
-    " ######### ",
-    " #### #### ",
-    " ######### ",
-    " ######### ",
-    " ### # ### ",
-    " ######### ",
-    " ######### ",
-    " ######### ",
-    " ######### ",
+    "       r       ",
+    "       r       ",
+    "       r       ",
+    "      rrr      ",
+    "      rrr      ",
+    "     rrrrr     ",
+    "     rrrrr     ",
+    "    rrrrrrr    ",
+    "    rrrrrrr    ",
+    "   rrrrrrrrr   ",
+    "   rrrrrrrrr   ",
+    "  rrrrrrrrrrr  ",
+    "  rrrrrrrrrrr  ",
+    " rrrrrrrrrrrrr ",
+    "rrrrrrrrrrrrrrr",
+    " wwwwwwwwwwwww ",
+    " wwwwwwwwwwwww ",
+    "  ###########  ",
+    "  ##### #####  ",
+    "  ##### #####  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
   ];
+  const TOWER_ALPHA: Record<string, number> = { r: 0.9, w: 0.8, "#": 0.7 };
   // Paddle steamer, bow to the left, dressed overall: strings of pennants from the bow over both masts
   // to the stern, masts raked back, a funnel, the deck saloon and the paddle box, sitting low in the water
   const STEAMER = [
@@ -303,16 +319,22 @@
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       // Tower first, so the bridge passes in front of it
       const towerWidth = TOWER[0].length * PX;
-      ctx!.clearRect(towerX - towerWidth / 2, water - TOWER.length * PX, towerWidth, TOWER.length * PX);
-      ctx!.globalAlpha = 0.7;
-      drawSprite(TOWER, towerX, water);
+      const towerLeft = towerX - towerWidth / 2;
+      const towerTop = water - TOWER.length * PX;
+      TOWER.forEach((row, ry) => {
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] === " ") continue;
+          ctx!.clearRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+          ctx!.globalAlpha = TOWER_ALPHA[row[rx]];
+          ctx!.fillRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+        }
+      });
       // Its faint reflection, every other row, as far as the canvas reaches
       ctx!.globalAlpha = 0.15;
-      const left0 = towerX - towerWidth / 2;
       for (let ry = 0; ry < TOWER.length && water + ry * PX < height; ry += 2) {
         const row = TOWER[TOWER.length - 1 - ry];
         for (let rx = 0; rx < row.length; rx++) {
-          if (row[rx] !== " ") ctx!.fillRect(left0 + rx * PX, water + ry * PX, PX, PX);
+          if (row[rx] !== " ") ctx!.fillRect(towerLeft + rx * PX, water + ry * PX, PX, PX);
         }
       }
       // Roof band and bridge wall hide what is behind them; sized in CSS px, finer than the sprites
