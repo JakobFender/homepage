@@ -40,9 +40,10 @@
   ];
   const PILATUS_ASPECT = 3; // drawn width as a multiple of the mountain area's height (photo: ~2.5)
   const LAKE = 0.22; // share of the sign-off area at the bottom that is lake
-  // Dot colors from --color-line towards --color-muted: the far ridge lighter, the foothills darker
-  const BACK_STRENGTH = 0.55;
-  const FRONT_STRENGTH = 0.8;
+  // Dot colors from --color-line towards --color-muted: the mountain is drawn in grey, the far ridge
+  // a touch lighter than the foothills for depth
+  const BACK_STRENGTH = 0.85;
+  const FRONT_STRENGTH = 1;
 
   function sample(profile: number[], t: number) {
     const i = Math.min(Math.max(t, 0), 1) * (profile.length - 1);
