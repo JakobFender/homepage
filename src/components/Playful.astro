@@ -1,0 +1,114 @@
+---
+// Small playful details: project thumbnails that follow the cursor, a greeting in the browser console
+// and a terminal mode behind the Konami code. Styling lives in global.css.
+---
+
+<script>
+  // ---------- Project peek: a thumbnail follows the cursor over cards with data-peek ----------
+
+  let peek: HTMLImageElement | undefined;
+
+  function getPeek() {
+    if (!peek || !peek.isConnected) {
+      peek = document.createElement("img");
+      peek.className = "project-peek";
+      peek.alt = "";
+      peek.setAttribute("aria-hidden", "true");
+      document.body.append(peek);
+    }
+    return peek;
+  }
+
+  function movePeek(event: PointerEvent) {
+    const el = getPeek();
+    const gap = 16;
+    const width = el.offsetWidth;
+    const height = el.offsetHeight;
+    // Sit below-right of the cursor, flipping to the other side near the viewport edges
+    let x = event.clientX + gap;
+    let y = event.clientY + gap;
+    if (x + width > innerWidth - gap) x = event.clientX - width - gap;
+    if (y + height > innerHeight - gap) y = event.clientY - height - gap;
+    el.style.translate = `${Math.max(gap, x)}px ${Math.max(gap, y)}px`;
+  }
+
+  function setUpPeek() {
+    // Only for a real mouse: on touch the thumbnail would cover the card being tapped
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    document.querySelectorAll<HTMLElement>("[data-peek]").forEach((card) => {
+      const src = card.dataset.peek;
+      if (!src) return;
+      card.addEventListener("pointerenter", (event) => {
+        const el = getPeek();
+        if (el.getAttribute("src") !== src) el.src = src;
+        movePeek(event);
+        el.classList.add("is-shown");
+      });
+      card.addEventListener("pointermove", movePeek);
+      card.addEventListener("pointerleave", () => getPeek().classList.remove("is-shown"));
+    });
+  }
+
+  // ---------- Console greeting for anyone who opens the dev tools ----------
+
+  console.log(
+    "%cHi there!%c\n\nCurious how this site works? It's built with Astro, Tailwind and a little canvas.\n" +
+      "Say hello: https://github.com/jakobfender\n\nPsst: try ↑ ↑ ↓ ↓ ← → ← → B A on the page.",
+    "font: 500 20px Besley, Georgia, serif; color: #6B7A3A;",
+    "font: 12px 'Martian Mono', monospace; color: inherit;"
+  );
+
+  // ---------- Terminal mode behind the Konami code ----------
+
+  const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+  const STORAGE_KEY = "terminal-mode";
+  let progress = 0;
+  let toastTimer = 0;
+
+  function readTerminalMode() {
+    try {
+      return sessionStorage.getItem(STORAGE_KEY) === "on";
+    } catch {
+      return false;
+    }
+  }
+
+  function applyTerminalMode(on: boolean) {
+    document.documentElement.classList.toggle("terminal", on);
+  }
+
+  function toast(text: string) {
+    document.querySelector(".terminal-toast")?.remove();
+    const el = document.createElement("p");
+    el.className = "terminal-toast mono-label";
+    el.setAttribute("role", "status");
+    el.textContent = text;
+    document.body.append(el);
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => el.remove(), 3000);
+  }
+
+  document.addEventListener("keydown", (event) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("input, textarea, select, [contenteditable]")) return;
+    const key = event.key.toLowerCase();
+    progress = key === KONAMI[progress] ? progress + 1 : key === KONAMI[0] ? 1 : 0;
+    if (progress < KONAMI.length) return;
+    progress = 0;
+    const on = !document.documentElement.classList.contains("terminal");
+    applyTerminalMode(on);
+    try {
+      sessionStorage.setItem(STORAGE_KEY, on ? "on" : "off");
+    } catch {
+      // Storage blocked: the mode still works for this page
+    }
+    toast(on ? "> terminal mode on. Same code again to exit." : "> terminal mode off.");
+  });
+
+  // Client-side navigation replaces the <html> attributes, so restore the mode on every page
+  document.addEventListener("astro:after-swap", () => applyTerminalMode(readTerminalMode()));
+  document.addEventListener("astro:page-load", () => {
+    applyTerminalMode(readTerminalMode());
+    setUpPeek();
+  });
+</script>

@@ -3,7 +3,8 @@
 ---
 
 <label class="swap swap-rotate">
-  <input type="checkbox" class="theme-controller" value="dark" />
+  <!-- Not DaisyUI's .theme-controller: that switches the theme in CSS before the script can animate it -->
+  <input type="checkbox" class="theme-toggle" value="dark" aria-label="Toggle dark mode" />
 
   <!-- sun icon -->
   <svg class="swap-off fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -22,7 +23,7 @@
     const theme = localStorage.getItem('theme') ||
                   (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
-    const toggle = document.querySelector('.theme-controller');
+    const toggle = document.querySelector('.theme-toggle');
     if (toggle) {
       toggle.checked = theme === 'dark';
     }
@@ -31,17 +32,34 @@
   // Update theme when toggle is clicked
   document.addEventListener('change', (e) => {
     const target = e.target;
-    if (target.classList.contains('theme-controller')) {
+    if (target.classList.contains('theme-toggle')) {
       const theme = target.checked ? 'dark' : 'light';
       const apply = () => document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
-      // Crossfade between themes where the View Transitions API exists
+      // Spread the new theme as a circle from the toggle where the View Transitions API exists
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (document.startViewTransition && !reduceMotion) {
-        document.startViewTransition(apply);
-      } else {
+      if (!document.startViewTransition || reduceMotion) {
         apply();
+        return;
       }
+      const rect = target.closest('label').getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      // Radius that reaches the farthest corner of the viewport
+      const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      const root = document.documentElement;
+      // Astro's page transitions give <html> its own view-transition name, so the page is captured under it
+      const name = getComputedStyle(root).viewTransitionName;
+      const layer = name && name !== 'none' ? name : 'root';
+      root.classList.add('theme-reveal');
+      const transition = document.startViewTransition(apply);
+      transition.ready.then(() => {
+        root.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 450, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', pseudoElement: `::view-transition-new(${layer})` }
+        );
+      });
+      transition.finished.finally(() => root.classList.remove('theme-reveal'));
     }
   });
 

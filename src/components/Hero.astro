@@ -63,12 +63,174 @@ const links = Object.entries(socialLinks ?? {}).filter(
     </div>
     <!-- Cut-out portrait, bottom-aligned with the hero text -->
     <div class="lg:col-span-4 order-1 lg:order-2 flex justify-start lg:justify-end hero-portrait">
-      <Image
-        src={avatar}
-        alt={name}
-        class="block h-64 lg:h-[360px] w-auto"
-        loading="eager"
-      />
+      <div class="relative" data-portrait>
+        <Image
+          src={avatar}
+          alt={name}
+          class="block h-64 lg:h-[360px] w-auto"
+          loading="eager"
+        />
+        <!-- Interactive copy of the portrait: its pixels drift away from the cursor (script below) -->
+        <canvas class="absolute inset-0 w-full h-full" aria-hidden="true" hidden></canvas>
+      </div>
     </div>
   </div>
 </section>
+
+<script>
+  // The portrait is cut into small tiles drawn on a canvas. Tiles near the cursor drift away from it
+  // and ease back home (no overshoot) once it moves on. The static <img> stays for no-JS,
+  // reduced motion and screen readers; the canvas only replaces it visually once it has drawn.
+  const TILE = 4; // CSS px per tile
+  const RADIUS = 72; // CSS px around the cursor that pushes tiles
+  const PUSH = 12; // max drift in CSS px
+  const EASE = 0.18; // fraction of the remaining distance covered per frame
+
+  let stop: (() => void) | undefined;
+
+  function setUpPortrait() {
+    stop?.();
+    const wrapper = document.querySelector<HTMLElement>("[data-portrait]");
+    const img = wrapper?.querySelector("img");
+    const canvas = wrapper?.querySelector("canvas");
+    if (!wrapper || !img || !canvas) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Source image rendered once at display resolution; tiles are copied from it
+    const source = document.createElement("canvas");
+    const sourceCtx = source.getContext("2d")!;
+
+    // k varies the push per tile so the pixels scatter like dust instead of a perfect radial star
+    type Tile = { x: number; y: number; dx: number; dy: number; k: number };
+    let tiles: Tile[] = [];
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let pointer: { x: number; y: number } | null = null;
+    let frame = 0;
+
+    function layout() {
+      width = img!.clientWidth;
+      height = img!.clientHeight;
+      if (!width || !height) return false;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      for (const c of [canvas!, source]) {
+        c.width = Math.round(width * dpr);
+        c.height = Math.round(height * dpr);
+      }
+      sourceCtx.clearRect(0, 0, source.width, source.height);
+      sourceCtx.drawImage(img!, 0, 0, source.width, source.height);
+
+      // Skip fully transparent tiles so only the visible portrait is animated
+      const alpha = sourceCtx.getImageData(0, 0, source.width, source.height).data;
+      tiles = [];
+      const step = TILE * dpr;
+      for (let y = 0; y < height; y += TILE) {
+        for (let x = 0; x < width; x += TILE) {
+          const px = Math.min(Math.round(x * dpr + step / 2), source.width - 1);
+          const py = Math.min(Math.round(y * dpr + step / 2), source.height - 1);
+          let visible = alpha[(py * source.width + px) * 4 + 3] > 0;
+          if (!visible) {
+            // Check the corners too so tiles on the outline are kept
+            for (const [ox, oy] of [[0, 0], [step - 1, 0], [0, step - 1], [step - 1, step - 1]]) {
+              const cx = Math.min(Math.round(x * dpr + ox), source.width - 1);
+              const cy = Math.min(Math.round(y * dpr + oy), source.height - 1);
+              if (alpha[(cy * source.width + cx) * 4 + 3] > 0) {
+                visible = true;
+                break;
+              }
+            }
+          }
+          if (visible) tiles.push({ x, y, dx: 0, dy: 0, k: 0.55 + Math.random() * 0.45 });
+        }
+      }
+      return true;
+    }
+
+    function draw() {
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      const size = TILE * dpr;
+      for (const t of tiles) {
+        const sx = t.x * dpr;
+        const sy = t.y * dpr;
+        // Whole device pixels keep the dither crisp and avoid seams between tiles
+        const ox = Math.round(t.dx * dpr);
+        const oy = Math.round(t.dy * dpr);
+        ctx!.drawImage(source, sx, sy, size, size, sx + ox, sy + oy, size, size);
+      }
+    }
+
+    function tick() {
+      frame = 0;
+      let moving = false;
+      for (const t of tiles) {
+        let tx = 0;
+        let ty = 0;
+        if (pointer) {
+          const cx = t.x + TILE / 2 - pointer.x;
+          const cy = t.y + TILE / 2 - pointer.y;
+          const distance = Math.hypot(cx, cy);
+          if (distance < RADIUS && distance > 0) {
+            // Smooth falloff: strongest at the cursor, zero at the edge of the radius
+            const force = (0.5 + 0.5 * Math.cos((Math.PI * distance) / RADIUS)) * PUSH * t.k;
+            tx = (cx / distance) * force;
+            ty = (cy / distance) * force;
+          }
+        }
+        t.dx += (tx - t.dx) * EASE;
+        t.dy += (ty - t.dy) * EASE;
+        if (Math.abs(tx - t.dx) > 0.05 || Math.abs(ty - t.dy) > 0.05) {
+          moving = true;
+        } else {
+          t.dx = tx;
+          t.dy = ty;
+        }
+      }
+      draw();
+      if (moving) frame = requestAnimationFrame(tick);
+    }
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+
+    const onMove = (event: PointerEvent) => {
+      const rect = canvas!.getBoundingClientRect();
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      schedule();
+    };
+    const onLeave = () => {
+      pointer = null;
+      schedule();
+    };
+    const onResize = () => {
+      if (layout()) draw();
+    };
+
+    const start = () => {
+      if (!layout()) return;
+      draw();
+      canvas!.hidden = false;
+      img!.style.visibility = "hidden";
+      // Listen on the wrapper's parent so the push starts a little before the cursor reaches the face
+      wrapper!.parentElement!.addEventListener("pointermove", onMove);
+      wrapper!.parentElement!.addEventListener("pointerleave", onLeave);
+      window.addEventListener("resize", onResize);
+    };
+
+    if (img.complete && img.naturalWidth) start();
+    else img.addEventListener("load", start, { once: true });
+
+    stop = () => {
+      cancelAnimationFrame(frame);
+      wrapper!.parentElement!.removeEventListener("pointermove", onMove);
+      wrapper!.parentElement!.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("resize", onResize);
+      img.removeEventListener("load", start);
+    };
+  }
+
+  document.addEventListener("astro:page-load", setUpPortrait);
+</script>

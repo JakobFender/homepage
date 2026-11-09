@@ -1,6 +1,6 @@
 ---
 import { url } from "../utils/url";
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import SkillBadge from "./SkillBadge.astro";
 import type { CollectionEntry } from "astro:content";
 
@@ -9,6 +9,11 @@ interface Props {
 }
 
 const { project } = Astro.props;
+
+// Small optimized thumbnail that Playful.astro shows next to the cursor while hovering the card
+const peek = project.data.preview
+  ? await getImage({ src: project.data.preview, width: 480, format: "webp" })
+  : undefined;
 
 function formatPeriod(startDate: Date, endDate?: Date) {
   const options: Intl.DateTimeFormatOptions = {
@@ -23,7 +28,7 @@ function formatPeriod(startDate: Date, endDate?: Date) {
 }
 ---
 
-<article class="group flex flex-col" data-reveal>
+<article class="group flex flex-col" data-reveal data-peek={peek?.src}>
   {
     project.data.image && (
       <a href={url(`/projects/${project.id}`)} class="block mb-4">

@@ -34,6 +34,8 @@ const projects = defineCollection({
     title: z.string(),
     description: z.string(),
     image: image().optional(),
+    // Thumbnail that follows the cursor while hovering the project card
+    preview: image().optional(),
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional(),
     skills: z.array(z.string()),

@@ -1,5 +1,6 @@
 ---
-// Client-side motion: scroll reveals, the growing work timeline line and smooth <details>.
+// Client-side motion: scroll reveals, counting section numbers, the growing work timeline line
+// and smooth <details>.
 // Styling lives in global.css; everything here is skipped under prefers-reduced-motion.
 ---
 
@@ -9,6 +10,7 @@
   let revealObserver: IntersectionObserver | undefined;
   let stopRevealSweep: (() => void) | undefined;
   let stopLine: (() => void) | undefined;
+  let countObserver: IntersectionObserver | undefined;
 
   // Fade elements up once as they enter the viewport. Elements that enter together are staggered.
   function setUpReveal() {
@@ -55,6 +57,39 @@
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(frame);
     };
+  }
+
+  // Count section numbers ("03 — Projects") up from 00 like an odometer when they scroll into view.
+  // The label sits in a [data-reveal] block that is still fading in, so the jump to 00 is not visible.
+  function setUpCountLabels() {
+    countObserver?.disconnect();
+    const labels = document.querySelectorAll<HTMLElement>("[data-count]");
+    if (reduceMotion() || !("IntersectionObserver" in window)) return;
+    countObserver = new IntersectionObserver(
+      (entries, observer) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const label = entry.target as HTMLElement;
+          observer.unobserve(label);
+          const match = label.textContent?.match(/^(\d+)(.*)$/s);
+          if (!match) continue;
+          const [, digits, rest] = match;
+          const target = Number(digits);
+          const show = (n: number) => (label.textContent = String(n).padStart(digits.length, "0") + rest);
+          let n = 0;
+          show(n);
+          const step = Math.max(60, 400 / Math.max(target, 1));
+          const tick = () => {
+            if (++n > target) return;
+            show(n);
+            setTimeout(tick, step);
+          };
+          setTimeout(tick, 200 + step);
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px" }
+    );
+    labels.forEach((label) => countObserver!.observe(label));
   }
 
   // Grow the work timeline's line downward as the section scrolls through the viewport.
@@ -114,6 +149,7 @@
   // astro:page-load fires on the first load and after every client-side navigation
   document.addEventListener("astro:page-load", () => {
     setUpReveal();
+    setUpCountLabels();
     setUpTimelineLine();
   });
 </script>
