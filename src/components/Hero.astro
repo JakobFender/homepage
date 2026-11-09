@@ -277,8 +277,8 @@ const links = Object.entries(socialLinks ?? {}).filter(
 
   document.addEventListener("astro:page-load", setUpPortrait);
 
-  // Clicking the name cycles the greeting through the languages of Switzerland (and English)
-  const GREETINGS = ["Hi", "Hoi", "Grüezi", "Salut", "Ciao"];
+  // Clicking the name cycles through the greetings Jakob actually uses
+  const GREETINGS = ["Hi", "Sali", "Grüezi", "Ciao", "Guten Morgen"];
 
   // Longer greetings can wrap the heading onto another line. On the first click, lock the heading to
   // its tallest variant so the page moves at most once instead of jumping while cycling.
