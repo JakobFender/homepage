@@ -3,7 +3,8 @@
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
 // In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
 // across the lake and a paddle steamer crosses it the other way. An aerial cable car shuttles
-// between the summit and a station on the right flank. By day, a single-engine turboprop flies across the sky.
+// between the summit and a station on the right flank. In the foreground, the covered Chapel Bridge
+// (Kapellbrücke) crosses the water with the octagonal Water Tower behind it. By day, a single-engine turboprop flies across the sky.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -32,6 +33,31 @@
   const CABIN = ["  ###  ", "   #   ", "#######", "# # # #", "#######"];
   const RIDE = 9000; // ms from one station to the other
   const DWELL = 2500; // ms at each station
+  // Water Tower next to the Chapel Bridge: pointed roof, timber storey with windows, stone base
+  const TOWER = [
+    "     #     ",
+    "     #     ",
+    "    ###    ",
+    "    ###    ",
+    "   #####   ",
+    "   #####   ",
+    "  #######  ",
+    "  #######  ",
+    " ######### ",
+    "###########",
+    " ######### ",
+    " # # # # # ",
+    " ######### ",
+    " ######### ",
+    " #### #### ",
+    " ######### ",
+    " ######### ",
+    " ### # ### ",
+    " ######### ",
+    " ######### ",
+    " ######### ",
+    " ######### ",
+  ];
   // Paddle steamer, bow to the left: funnel, two masts, a deck saloon with windows and the paddle box
   const STEAMER = [
     "   #        ##         #   ",
@@ -244,6 +270,53 @@
       drawSprite(CABIN, x, y(x) + (CABIN.length - 1) * PX + 1);
     }
 
+    // The Chapel Bridge runs out from the left shore on trestles, the Water Tower stands just behind it.
+    // Both hide whatever passes behind them, except through the open gallery under the roof.
+    function drawBridge() {
+      const lakeTop = SKY + areaHeight();
+      const water = Math.round(lakeTop + (height - lakeTop) * 0.62);
+      const deck = water - 8; // bottom of the bridge wall, trestles below it
+      const left = -2 * PX;
+      const length = Math.min(Math.round(width * 0.38), 420);
+      const right = left + length;
+      const towerX = Math.round(left + length * 0.72);
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      // Tower first, so the bridge passes in front of it
+      const towerWidth = TOWER[0].length * PX;
+      ctx!.clearRect(towerX - towerWidth / 2, water - TOWER.length * PX, towerWidth, TOWER.length * PX);
+      ctx!.globalAlpha = 0.7;
+      drawSprite(TOWER, towerX, water);
+      // Its faint reflection, every other row, as far as the canvas reaches
+      ctx!.globalAlpha = 0.15;
+      const left0 = towerX - towerWidth / 2;
+      for (let ry = 0; ry < TOWER.length && water + ry * PX < height; ry += 2) {
+        const row = TOWER[TOWER.length - 1 - ry];
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] !== " ") ctx!.fillRect(left0 + rx * PX, water + ry * PX, PX, PX);
+        }
+      }
+      // Roof band and bridge wall hide what is behind them; sized in CSS px, finer than the sprites
+      const roofTop = deck - 11;
+      const roofBottom = deck - 7;
+      const wallTop = deck - 3;
+      ctx!.clearRect(left, roofTop, length + 4, roofBottom - roofTop);
+      ctx!.clearRect(left, wallTop, length + 4, deck - wallTop);
+      ctx!.globalAlpha = 0.8;
+      ctx!.fillRect(left + 3, roofTop, length - 2, 1); // ridge
+      ctx!.fillRect(left, roofTop + 1, length + 4, roofBottom - roofTop - 1); // roof with eaves
+      ctx!.fillRect(left, wallTop, length + 4, deck - wallTop); // wall
+      // Open gallery: posts under the roof
+      ctx!.globalAlpha = 0.6;
+      for (let x = left + 3; x <= right; x += 8) ctx!.fillRect(x, roofBottom, 1, wallTop - roofBottom);
+      // Trestles down into the water: two piles with a cross brace
+      for (let x = left + 10; x < right - 6; x += 26) {
+        ctx!.fillRect(x, deck, 2, water - deck);
+        ctx!.fillRect(x + 8, deck, 2, water - deck);
+        ctx!.fillRect(x, deck + 2, 10, 1);
+      }
+      ctx!.globalAlpha = 1;
+    }
+
     function drawSteamer(now: number) {
       const steamerWidth = STEAMER[0].length * PX;
       // Right to left and wrap around; moored near the right shore under reduced motion
@@ -302,6 +375,7 @@
       else drawPlane(now);
       drawCableway(now);
       drawBoat(now);
+      drawBridge();
       drawSteamer(now);
       drawTrain(now);
     }
