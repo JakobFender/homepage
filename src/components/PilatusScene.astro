@@ -2,7 +2,7 @@
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
 // In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
-// across the lake. By day, a single-engine turboprop flies across the sky.
+// across the lake and a paddle steamer crosses it the other way. By day, a single-engine turboprop flies across the sky.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -27,6 +27,20 @@
   ];
   const STROKE = 600; // ms per oar position
   const DRIFT = 70000; // ms to cross the whole lake
+  // Paddle steamer, bow to the left: funnel, two masts, a deck saloon with windows and the paddle box
+  const STEAMER = [
+    "   #        ##         #   ",
+    "   #        ##         #   ",
+    "   #     ########      #   ",
+    "   #   ############    ##  ",
+    " ########################  ",
+    "## # # # # ##### # # # # ##",
+    "###########################",
+    " ######################### ",
+    "   #####################   ",
+  ];
+  const SAIL = 90000; // ms for the steamer to cross the whole lake
+  const PUFF = 900; // ms between smoke puffs
   // Single-engine turboprop with a T-tail, nose to the right; the propeller is drawn separately
   const PLANE = [
     "####              ",
@@ -184,6 +198,37 @@
       ctx!.globalAlpha = 1;
     }
 
+    function drawSteamer(now: number) {
+      const steamerWidth = STEAMER[0].length * PX;
+      // Right to left and wrap around; moored near the right shore under reduced motion
+      const progress = reduceMotion ? 0.8 : 1 - ((now / SAIL + 0.15) % 1);
+      const x = Math.round(-steamerWidth + progress * (width + steamerWidth * 2));
+      // Lower on the lake than the rowboat, so nearer to the viewer
+      const water = SKY + areaHeight() + (height - SKY - areaHeight()) * 0.85;
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = 0.75;
+      drawSprite(STEAMER, x, water);
+      if (reduceMotion) {
+        ctx!.globalAlpha = 1;
+        return;
+      }
+      // Smoke puffs rising from the funnel and drifting back behind the stern as they fade
+      const funnelX = Math.round(x) - steamerWidth / 2 + 12 * PX;
+      const funnelTop = Math.round(water) - STEAMER.length * PX;
+      for (let i = 0; i < 4; i++) {
+        const age = ((now / PUFF + i) % 4) / 4; // 0 fresh, 1 gone
+        const size = age < 0.5 ? 2 : 3;
+        ctx!.globalAlpha = 0.45 * (1 - age);
+        ctx!.fillRect(funnelX + Math.round(age * 22), funnelTop - 3 - Math.round(age * 10), size, size);
+      }
+      // Wake behind the stern
+      ctx!.globalAlpha = 0.35;
+      const stern = Math.round(x) + steamerWidth / 2;
+      ctx!.fillRect(stern + 4, Math.round(water) - 1, 8, 1);
+      ctx!.fillRect(stern + 16, Math.round(water), 5, 1);
+      ctx!.globalAlpha = 1;
+    }
+
     function drawPlane(now: number) {
       const planeWidth = PLANE[0].length * PX;
       // Left to right across the sky, then a pause off screen; parked high on the left under reduced motion
@@ -210,6 +255,7 @@
       if (dark) drawSky(now);
       else drawPlane(now);
       drawBoat(now);
+      drawSteamer(now);
       drawTrain(now);
     }
 
