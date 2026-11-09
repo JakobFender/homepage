@@ -298,6 +298,11 @@ table {
     animation: rise 600ms var(--ease-out) 250ms both;
   }
 
+  /* With JS the portrait develops from coarse blocks instead (Hero.astro) */
+  .hero-portrait.develops {
+    animation: none;
+  }
+
   /*
    * Scroll reveal: Motion.astro adds .is-visible once an element enters the viewport.
    * Only hidden when scripts run, so content never stays invisible without JavaScript.

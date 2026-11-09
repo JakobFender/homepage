@@ -78,13 +78,18 @@ const links = Object.entries(socialLinks ?? {}).filter(
 </section>
 
 <script>
-  // The portrait is cut into small tiles drawn on a canvas. Tiles near the cursor drift away from it
+  // The portrait is cut into small tiles drawn on a canvas. On load it develops from coarse blocks
+  // to full detail. Afterwards, tiles near the cursor drift away from it
   // and ease back home (no overshoot) once it moves on. The static <img> stays for no-JS,
   // reduced motion and screen readers; the canvas only replaces it visually once it has drawn.
   const TILE = 4; // CSS px per tile
   const RADIUS = 72; // CSS px around the cursor that pushes tiles
   const PUSH = 12; // max drift in CSS px
   const EASE = 0.18; // fraction of the remaining distance covered per frame
+  // On load the portrait "develops": it starts as coarse blocks that get finer, like a photo developing
+  const DEVELOP_BLOCKS = [32, 20, 14, 10, 7, 5, 3, 2]; // CSS px per block, one step each
+  const DEVELOP_STEP = 75; // ms per step, about 600ms in total
+  const DEVELOP_DELAY = 250; // ms, so it starts with the rest of the hero sequence
 
   let stop: (() => void) | undefined;
 
@@ -110,6 +115,8 @@ const links = Object.entries(socialLinks ?? {}).filter(
     let dpr = 1;
     let pointer: { x: number; y: number } | null = null;
     let frame = 0;
+    let developing = true;
+    let developTimer = 0;
 
     function layout() {
       width = img!.clientWidth;
@@ -193,8 +200,35 @@ const links = Object.entries(socialLinks ?? {}).filter(
     }
 
     const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(tick);
+      if (!frame && !developing) frame = requestAnimationFrame(tick);
     };
+
+    // Draw the portrait as blocks of the given size: downscale with smoothing (averages each block),
+    // then upscale without it so the blocks stay crisp squares
+    const small = document.createElement("canvas");
+    const smallCtx = small.getContext("2d")!;
+    function drawBlocks(block: number) {
+      small.width = Math.ceil(width / block);
+      small.height = Math.ceil(height / block);
+      smallCtx.imageSmoothingEnabled = true;
+      smallCtx.clearRect(0, 0, small.width, small.height);
+      smallCtx.drawImage(source, 0, 0, small.width * block * dpr, small.height * block * dpr, 0, 0, small.width, small.height);
+      ctx!.imageSmoothingEnabled = false;
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx!.drawImage(small, 0, 0, small.width * block * dpr, small.height * block * dpr);
+      ctx!.imageSmoothingEnabled = true;
+    }
+
+    function develop(step = 0) {
+      if (step >= DEVELOP_BLOCKS.length) {
+        developing = false;
+        draw();
+        if (pointer) schedule();
+        return;
+      }
+      drawBlocks(DEVELOP_BLOCKS[step]);
+      developTimer = window.setTimeout(() => develop(step + 1), DEVELOP_STEP);
+    }
 
     const onMove = (event: PointerEvent) => {
       const rect = canvas!.getBoundingClientRect();
@@ -206,14 +240,17 @@ const links = Object.entries(socialLinks ?? {}).filter(
       schedule();
     };
     const onResize = () => {
-      if (layout()) draw();
+      if (layout() && !developing) draw();
     };
 
     const start = () => {
       if (!layout()) return;
-      draw();
+      // Developing replaces the CSS rise-in, and the canvas stays empty until it starts
+      wrapper!.parentElement!.classList.add("develops");
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
       canvas!.hidden = false;
       img!.style.visibility = "hidden";
+      developTimer = window.setTimeout(() => develop(), DEVELOP_DELAY);
       // Listen on the wrapper's parent so the push starts a little before the cursor reaches the face
       wrapper!.parentElement!.addEventListener("pointermove", onMove);
       wrapper!.parentElement!.addEventListener("pointerleave", onLeave);
@@ -225,6 +262,7 @@ const links = Object.entries(socialLinks ?? {}).filter(
 
     stop = () => {
       cancelAnimationFrame(frame);
+      clearTimeout(developTimer);
       wrapper!.parentElement!.removeEventListener("pointermove", onMove);
       wrapper!.parentElement!.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("resize", onResize);
