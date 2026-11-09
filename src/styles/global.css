@@ -200,12 +200,9 @@
   transition: color 200ms var(--ease-out);
 }
 
-/* On hover the straight underline turns into a small hand-drawn wave */
 .link:hover {
   color: var(--color-base-content);
-  text-decoration-style: wavy;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
 }
 
 /* External links get an arrow that nudges up and right on hover */
@@ -354,68 +351,4 @@ html.theme-reveal::view-transition-old(*),
 html.theme-reveal::view-transition-new(*) {
   animation: none;
   mix-blend-mode: normal;
-}
-
-/* Project thumbnail that follows the cursor (Playful.astro) */
-.project-peek {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 40;
-  width: 240px;
-  pointer-events: none;
-  border: 1px solid var(--color-line);
-  border-radius: 2px;
-  background: var(--color-base-100);
-  opacity: 0;
-  scale: 0.96;
-  transition:
-    opacity 150ms var(--ease-out),
-    scale 150ms var(--ease-out);
-}
-
-.project-peek.is-shown {
-  opacity: 1;
-  scale: 1;
-}
-
-/* Terminal mode, toggled with the Konami code (Playful.astro) */
-html.terminal body,
-html.terminal body * {
-  font-family: var(--font-mono) !important;
-  font-style: normal !important;
-}
-
-html.terminal h2::before {
-  content: "$ ";
-  color: var(--color-primary);
-}
-
-html.terminal h1::after {
-  content: "";
-  display: inline-block;
-  width: 0.5em;
-  height: 0.9em;
-  margin-left: 0.15em;
-  vertical-align: -0.05em;
-  background: var(--color-primary);
-  animation: terminal-cursor 1s steps(1) infinite;
-}
-
-@keyframes terminal-cursor {
-  50% {
-    opacity: 0;
-  }
-}
-
-.terminal-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  translate: -50% 0;
-  z-index: 60;
-  padding: 8px 12px;
-  border: 1px solid var(--color-line);
-  border-radius: 2px;
-  background: var(--color-base-100);
 }
