@@ -143,6 +143,17 @@
     color: inherit;
   }
 
+  /* The name is a button that cycles the greeting (Hero.astro); it looks like plain heading text */
+  h1 .greet {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  h1 [data-greeting] {
+    display: inline-block;
+  }
+
   h1 .name {
     font-family: var(--font-name);
     font-style: italic;
@@ -271,6 +282,22 @@ table {
   mask-image: linear-gradient(to bottom, #000 70%, transparent);
 }
 
+/* Work timeline: hovering an entry turns its marker into a diamond with a thin ring around it */
+.tl-marker {
+  outline: 1px solid transparent;
+  outline-offset: 0;
+  transition:
+    rotate 200ms var(--ease-out),
+    outline-color 200ms var(--ease-out),
+    outline-offset 200ms var(--ease-out);
+}
+
+.tl-entry:hover .tl-marker {
+  rotate: 45deg;
+  outline-color: var(--color-primary);
+  outline-offset: 3px;
+}
+
 /* ---------- Motion (all of it is skipped under prefers-reduced-motion) ---------- */
 
 @keyframes fade-up {
@@ -298,6 +325,11 @@ table {
     animation: rise 600ms var(--ease-out) 250ms both;
   }
 
+  /* With JS the portrait develops from coarse blocks instead (Hero.astro) */
+  .hero-portrait.develops {
+    animation: none;
+  }
+
   /*
    * Scroll reveal: Motion.astro adds .is-visible once an element enters the viewport.
    * Only hidden when scripts run, so content never stays invisible without JavaScript.
@@ -317,8 +349,12 @@ table {
 
     /* Work timeline markers pop in after their entry */
     [data-reveal] .tl-marker {
-      transition: scale 250ms var(--ease-out);
-      transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
+      /* The pop-in keeps its delay; the hover turn (see .tl-entry) starts immediately */
+      transition:
+        scale 250ms var(--ease-out) calc(var(--reveal-delay, 0ms) + 150ms),
+        rotate 200ms var(--ease-out),
+        outline-color 200ms var(--ease-out),
+        outline-offset 200ms var(--ease-out);
     }
 
     [data-reveal]:not(.is-visible) .tl-marker {
@@ -380,6 +416,28 @@ body::before {
   left: 0;
   z-index: -1;
   width: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+/* Space above the footer for the skyline drawn by BackgroundDither.astro */
+.signoff {
+  height: 160px;
+}
+
+@media (min-width: 768px) {
+  .signoff {
+    height: 260px;
+  }
+}
+
+/* Olive dots that light up near the mouse (BackgroundDither.astro); sits just above the field */
+.bg-dither-trail {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   image-rendering: pixelated;
 }
