@@ -143,6 +143,17 @@
     color: inherit;
   }
 
+  /* The name is a button that cycles the greeting (Hero.astro); it looks like plain heading text */
+  h1 .greet {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  h1 [data-greeting] {
+    display: inline-block;
+  }
+
   h1 .name {
     font-family: var(--font-name);
     font-style: italic;

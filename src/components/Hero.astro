@@ -43,7 +43,12 @@ const links = Object.entries(socialLinks ?? {}).filter(
     <div class="lg:col-span-8 order-2 lg:order-1 pt-8 lg:pt-0">
       <p class="mono-label mb-6 hero-in" style="--d: 0ms">{title}</p>
       <h1 class="mb-6 hero-in" style="--d: 80ms">
-        Hi, I'm <em class="name">{firstName}</em>{restOfName.length > 0 && ` ${restOfName.join(" ")}`}.
+        <span data-greeting aria-live="polite">Hi</span>, I'm <button
+          type="button"
+          class="greet"
+          aria-label={`${firstName}: say hi in another language`}
+          data-greet><em class="name">{firstName}</em></button
+        >{restOfName.length > 0 && ` ${restOfName.join(" ")}`}.
       </h1>
       <p class="mb-4 hero-in" style="--d: 160ms">{description}</p>
       {location && <p class="meta mb-8 hero-in" style="--d: 220ms">{location}</p>}
@@ -271,4 +276,56 @@ const links = Object.entries(socialLinks ?? {}).filter(
   }
 
   document.addEventListener("astro:page-load", setUpPortrait);
+
+  // Clicking the name cycles the greeting through the languages of Switzerland (and English)
+  const GREETINGS = ["Hi", "Hoi", "Grüezi", "Salut", "Ciao"];
+
+  // Longer greetings can wrap the heading onto another line. On the first click, lock the heading to
+  // its tallest variant so the page moves at most once instead of jumping while cycling.
+  function reserveHeight(greeting: HTMLElement) {
+    const heading = greeting.closest("h1");
+    if (!heading || heading.dataset.reserved) return;
+    heading.dataset.reserved = "true";
+    const current = greeting.textContent;
+    let tallest = 0;
+    for (const text of GREETINGS) {
+      greeting.textContent = text;
+      tallest = Math.max(tallest, heading.offsetHeight);
+    }
+    greeting.textContent = current;
+    heading.style.minHeight = `${tallest}px`;
+  }
+
+  // The reserved height is only valid for the current width
+  window.addEventListener("resize", () => {
+    const heading = document.querySelector<HTMLElement>("h1[data-reserved]");
+    if (!heading) return;
+    heading.style.minHeight = "";
+    delete heading.dataset.reserved;
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest("[data-greet]");
+    const greeting = document.querySelector<HTMLElement>("[data-greeting]");
+    if (!button || !greeting) return;
+    const next = GREETINGS[(GREETINGS.indexOf(greeting.textContent ?? "") + 1) % GREETINGS.length];
+    reserveHeight(greeting);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      greeting.textContent = next;
+      return;
+    }
+    greeting.getAnimations().forEach((animation) => animation.cancel());
+    const out = greeting.animate(
+      [{ opacity: 1, translate: "0 0" }, { opacity: 0, translate: "0 -4px" }],
+      { duration: 120, easing: "ease-in", fill: "forwards" }
+    );
+    out.onfinish = () => {
+      greeting.textContent = next;
+      out.cancel();
+      greeting.animate([{ opacity: 0, translate: "0 4px" }, { opacity: 1, translate: "0 0" }], {
+        duration: 180,
+        easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      });
+    };
+  });
 </script>
