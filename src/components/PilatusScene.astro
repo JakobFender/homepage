@@ -214,6 +214,20 @@
       });
     }
 
+    // Faint mirror image of a sprite below the water line at bottom, every other row like ripples,
+    // as far as the canvas reaches
+    function drawReflection(sprite: string[], x: number, bottom: number) {
+      const left = Math.round(x) - (sprite[0].length * PX) / 2;
+      const water = Math.round(bottom);
+      ctx!.globalAlpha = 0.15;
+      for (let ry = 0; ry < sprite.length && water + ry * PX < height; ry += 2) {
+        const row = sprite[sprite.length - 1 - ry];
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] !== " ") ctx!.fillRect(left + rx * PX, water + ry * PX, PX, PX);
+        }
+      }
+    }
+
     function drawTrain(now: number) {
       if (!trainStart) return;
       const x = trainX(now);
@@ -240,6 +254,7 @@
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       ctx!.globalAlpha = 0.75;
       drawSprite(sprite, x, water + bob);
+      drawReflection(sprite, x, water + bob);
       // A short wake behind the boat
       if (!reduceMotion) {
         ctx!.globalAlpha = 0.35;
@@ -329,14 +344,7 @@
           ctx!.fillRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
         }
       });
-      // Its faint reflection, every other row, as far as the canvas reaches
-      ctx!.globalAlpha = 0.15;
-      for (let ry = 0; ry < TOWER.length && water + ry * PX < height; ry += 2) {
-        const row = TOWER[TOWER.length - 1 - ry];
-        for (let rx = 0; rx < row.length; rx++) {
-          if (row[rx] !== " ") ctx!.fillRect(towerLeft + rx * PX, water + ry * PX, PX, PX);
-        }
-      }
+      drawReflection(TOWER, towerX, water);
       // Roof band and bridge wall hide what is behind them; sized in CSS px, finer than the sprites
       const roofTop = deck - 11;
       const roofBottom = deck - 7;
@@ -369,6 +377,7 @@
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       ctx!.globalAlpha = 0.75;
       drawSprite(STEAMER, x, water);
+      drawReflection(STEAMER, x, water);
       if (reduceMotion) {
         ctx!.globalAlpha = 1;
         return;
