@@ -19,22 +19,22 @@
   // Cogwheel railcar, one character per sprite pixel: # body, o wheel, space empty (windows)
   const CAR = ["########", "#  #  ##", "########", " o    o "];
   const CAR_GAP = 2; // sprite pixels between the two cars
-  const CLIMB = 6000; // ms from the valley to the summit
-  const REST = 1200; // ms at the summit
-  const DESCEND = 4000; // ms back down
+  const CLIMB = 15000; // ms from the valley to the summit
+  const REST = 3000; // ms at the summit
+  const DESCEND = 10000; // ms back down
   const STAR_SPACING = 40; // CSS px of width per star
   // Rowboat with a rower, two frames for the stroke: oars raised, then level in the water
   const BOAT = [
     ["     #     ", "    ###    ", "  ## # ##  ", " ######### ", "  #######  "],
     ["     #     ", "    ###    ", "#   ###   #", " ######### ", "  #######  "],
   ];
-  const STROKE = 600; // ms per oar position
-  const DRIFT = 70000; // ms to cross the whole lake
+  const STROKE = 1500; // ms per oar position
+  const DRIFT = 180000; // ms to cross the whole lake
   // Aerial cable car cabin: a slim hanger from the cable and a cabin two windows wide with a rounded roof
   const CABIN = ["  #  ", "  #  ", " ### ", "# # #", "#####"];
-  const RIDE = 16000; // ms from one station to the other
+  const RIDE = 40000; // ms from one station to the other
   const POSTS = 5; // stations and pylons along the cableway
-  const DWELL = 2500; // ms at each station
+  const DWELL = 6000; // ms at each station
   // Water Tower next to the Chapel Bridge: r steep pointed roof whose eave reaches past the timber storey,
   // w plain timber storey overhanging the stone, # octagonal stone tower with a small window near the top
   const TOWER = [
@@ -90,8 +90,8 @@
     "###########################",
     " ######################### ",
   ];
-  const SAIL = 90000; // ms for the steamer to cross the whole lake
-  const PUFF = 900; // ms between smoke puffs
+  const SAIL = 240000; // ms for the steamer to cross the whole lake
+  const PUFF = 2000; // ms between smoke puffs
   // Single-engine turboprop with a T-tail, nose to the right; the propeller is drawn separately
   const PLANE = [
     "####              ",
@@ -102,8 +102,8 @@
     "       ######     ",
   ];
   const PROP = [["#", "#", "#"], [" ", "#", " "]]; // spinning propeller: blade across, then edge-on
-  const FLIGHT = 28000; // ms to cross the sky
-  const FLIGHT_GAP = 22000; // ms out of sight before the next flight
+  const FLIGHT = 70000; // ms to cross the sky
+  const FLIGHT_GAP = 50000; // ms out of sight before the next flight
   // Clouds, one character per sprite pixel
   const CLOUDS = [
     [
@@ -128,7 +128,7 @@
     ],
   ];
   const CLOUD_SPACING = 320; // CSS px of width per cloud
-  const CLOUD_DRIFT = 420000; // ms for an average cloud to cross the whole sky
+  const CLOUD_DRIFT = 1000000; // ms for an average cloud to cross the whole sky
   // Crescent moon, one character per CSS px
   const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
@@ -203,7 +203,7 @@
       ctx!.fillStyle = text;
       for (const star of stars) {
         // Slow twinkle between dim and bright; still under reduced motion
-        const twinkle = reduceMotion ? 0.8 : 0.55 + 0.4 * Math.sin((now / 1000) * star.speed + star.phase);
+        const twinkle = reduceMotion ? 0.8 : 0.55 + 0.4 * Math.sin((now / 2500) * star.speed + star.phase);
         ctx!.globalAlpha = Math.max(0.15, twinkle);
         if (star.size === 3) {
           ctx!.fillRect(star.x - 1, star.y, 3, 1);
@@ -297,7 +297,7 @@
       const x = Math.round(-boatWidth + progress * (width + boatWidth * 2));
       // Float on the upper part of the lake, bobbing by a pixel
       const water = SKY + areaHeight() + (height - SKY - areaHeight()) * 0.45;
-      const bob = reduceMotion ? 0 : Math.round(Math.sin(now / 900));
+      const bob = reduceMotion ? 0 : Math.round(Math.sin(now / 2000));
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       ctx!.globalAlpha = 0.75;
       drawSprite(sprite, x, water + bob);
@@ -453,7 +453,7 @@
       if (t > 1) return;
       const x = Math.round(-planeWidth + t * (width + planeWidth * 2));
       // Cruise high in the sky with a gentle rise and fall
-      const bottom = 26 + (reduceMotion ? 0 : Math.round(Math.sin(now / 2500) * 2));
+      const bottom = 26 + (reduceMotion ? 0 : Math.round(Math.sin(now / 6000) * 2));
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       ctx!.globalAlpha = 0.75;
       drawSprite(PLANE, x, bottom);
