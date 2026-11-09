@@ -352,3 +352,33 @@ html.theme-reveal::view-transition-new(*) {
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* ---------- Background: paper grain and dither dot field ---------- */
+
+/* body gets its own stacking context so the layers below sit above its background but behind content */
+body {
+  isolation: isolate;
+}
+
+/* Faint paper grain: grey SVG noise blended with soft-light, so it averages out to the page color
+   in both themes instead of darkening it. Fixed, so it does not repaint on scroll */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  opacity: 0.5;
+}
+
+/* Dither dot field behind the top of the page, drawn by BackgroundDither.astro */
+.bg-dither {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  pointer-events: none;
+}

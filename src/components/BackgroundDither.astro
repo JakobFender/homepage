@@ -1,0 +1,76 @@
+---
+// A field of tiny square dots behind the top of the page, ordered-dithered like the hero portrait:
+// dense around the hero and dissolving further down. Drawn once per size and theme; static, no animation.
+---
+
+<canvas class="bg-dither" aria-hidden="true"></canvas>
+
+<script>
+  const GRID = 4; // CSS px between dot positions
+  const DOT = 1; // CSS px dot size
+  const HEIGHT = 1400; // CSS px of page covered by the field
+  const MAX_DENSITY = 0.55; // share of positions filled at the densest point
+
+  // 8x8 Bayer matrix: thresholds in [0, 1) that turn a smooth density into an even dot pattern
+  const BAYER = Array.from({ length: 64 }, (_, i) => {
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+    let value = 0;
+    for (let bit = 0, xr = x, yx = x ^ y; bit < 3; bit++, xr >>= 1, yx >>= 1) {
+      value = (value << 2) | ((yx & 1) << 1) | (xr & 1);
+    }
+    return (value + 0.5) / 64;
+  });
+
+  let stop: (() => void) | undefined;
+
+  function setUpDither() {
+    stop?.();
+    const canvas = document.querySelector<HTMLCanvasElement>(".bg-dither");
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    let lastWidth = 0;
+
+    function draw(force = false) {
+      const width = document.documentElement.clientWidth;
+      if (!force && width === lastWidth) return; // mobile URL bars resize only the height
+      lastWidth = width;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas!.style.height = `${HEIGHT}px`;
+      canvas!.width = Math.round(width * dpr);
+      canvas!.height = Math.round(HEIGHT * dpr);
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx!.clearRect(0, 0, width, HEIGHT);
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-line").trim();
+
+      // Densest around where the portrait sits: right column on desktop, top left on mobile
+      const cx = width >= 1024 ? width * 0.72 : width * 0.3;
+      const cy = width >= 1024 ? 300 : 200;
+      const reach = Math.max(width * 0.45, 520);
+
+      for (let y = 0, row = 0; y < HEIGHT; y += GRID, row++) {
+        // Overall fade down the page so the field never ends in a hard edge
+        const fade = (1 - y / HEIGHT) ** 2;
+        for (let x = 0, col = 0; x < width; x += GRID, col++) {
+          const proximity = Math.max(0, 1 - Math.hypot(x - cx, (y - cy) * 1.3) / reach);
+          const density = MAX_DENSITY * fade * (0.12 + 0.88 * proximity ** 1.5);
+          if (density > BAYER[(row % 8) * 8 + (col % 8)]) ctx!.fillRect(x, y, DOT, DOT);
+        }
+      }
+    }
+
+    draw(true);
+    const onResize = () => draw();
+    window.addEventListener("resize", onResize);
+    // Redraw in the other theme's line color when the theme toggle flips data-theme
+    const observer = new MutationObserver(() => draw(true));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    stop = () => {
+      window.removeEventListener("resize", onResize);
+      observer.disconnect();
+    };
+  }
+
+  document.addEventListener("astro:page-load", setUpDither);
+</script>

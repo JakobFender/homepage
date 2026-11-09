@@ -6,6 +6,7 @@ import ThemeSelector from "../components/ThemeSelector.astro";
 import FabFlower from "../components/FabFlower.astro";
 import Motion from "../components/Motion.astro";
 import ConsoleGreeting from "../components/ConsoleGreeting.astro";
+import BackgroundDither from "../components/BackgroundDither.astro";
 import { ClientRouter } from "astro:transitions";
 import { siteConfig } from "../config";
 import { url, isRelease } from "../utils/url";
@@ -86,6 +87,7 @@ const releaseName = import.meta.env.PUBLIC_RELEASE_NAME;
       <link rel="canonical" href={`${siteConfig.site}${productionPath}`} />
   </head>
   <body class="min-h-screen">
+    <BackgroundDither />
     {
       isRelease && (
         <a href={siteConfig.site} class="fixed top-4 left-4 z-50 mono-label bg-base-100 border border-line rounded-xs px-2 py-1">
