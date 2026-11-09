@@ -1,4 +1,4 @@
-// Shared by the background dot field (BackgroundDither.astro) and the scene above the footer
+// Shared by the background dot field (BackgroundDither.astro) and the scene at the bottom of the page
 // (PilatusScene.astro), so the train, boat and stars line up with the dotted mountain.
 
 // Pilatus as seen from Lucerne, traced from a photo: heights above the lake shore (1 = summit),
