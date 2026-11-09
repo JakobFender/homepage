@@ -1,0 +1,135 @@
+---
+// Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
+// Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
+// The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
+---
+
+<canvas class="pilatus-scene"></canvas>
+
+<script>
+  import { GRID, LAKE, ridgeAt } from "../scripts/skyline";
+
+  const PX = 2; // CSS px per sprite pixel
+  const SKY = 48; // CSS px of sky the canvas reaches above the .signoff space (see global.css)
+  // Cogwheel railcar, one character per sprite pixel: # body, o wheel, space empty (windows)
+  const CAR = ["########", "#  #  ##", "########", " o    o "];
+  const CAR_GAP = 2; // sprite pixels between the two cars
+  const CLIMB = 6000; // ms from the valley to the summit
+  const REST = 1200; // ms at the summit
+  const DESCEND = 4000; // ms back down
+
+  let stop: (() => void) | undefined;
+
+  function setUpScene() {
+    stop?.();
+    const canvas = document.querySelector<HTMLCanvasElement>(".pilatus-scene");
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let width = 0;
+    let height = 0;
+    let pageTop = 0; // canvas top in page coordinates, to line sprites up with the dot rows
+    let frame = 0;
+    let trainStart = 0; // timestamp of the current trip, 0 when the train is in the depot
+    let accent = "";
+
+    // Geometry of the .signoff space, which starts SKY px below the canvas top
+    const areaHeight = () => (height - SKY) * (1 - LAKE);
+    // y of the mountain's crest at x, in canvas px
+    const crestY = (x: number) => SKY + areaHeight() * (1 - ridgeAt(x, width, areaHeight()));
+    // y of the first dot row on or below the crest, where the background draws the crest dots
+    const crestDotY = (x: number) => Math.ceil((pageTop + crestY(x)) / GRID) * GRID - pageTop;
+
+    function resize() {
+      width = canvas!.clientWidth;
+      height = canvas!.clientHeight;
+      pageTop = canvas!.getBoundingClientRect().top + window.scrollY;
+      canvas!.width = width;
+      canvas!.height = height;
+      draw(performance.now());
+    }
+
+    // The trip runs from the low hills left of the massif to the summit
+    function route() {
+      let summit = 0;
+      for (let x = 0; x < width; x += 2) if (crestY(x) < crestY(summit)) summit = x;
+      let valley = summit;
+      while (valley > 0 && crestY(valley) < SKY + areaHeight() * 0.8) valley -= 2;
+      return { valley, summit };
+    }
+
+    const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+
+    function trainX(now: number) {
+      const elapsed = now - trainStart;
+      const { valley, summit } = route();
+      if (elapsed < CLIMB) return valley + (summit - valley) * ease(elapsed / CLIMB);
+      if (elapsed < CLIMB + REST) return summit;
+      if (elapsed < CLIMB + REST + DESCEND) return summit - (summit - valley) * ease((elapsed - CLIMB - REST) / DESCEND);
+      return null;
+    }
+
+    function drawSprite(sprite: string[], x: number, bottom: number) {
+      const top = Math.round(bottom) - sprite.length * PX;
+      const left = Math.round(x) - (sprite[0].length * PX) / 2;
+      sprite.forEach((row, ry) => {
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] !== " ") ctx!.fillRect(left + rx * PX, top + ry * PX, PX, PX);
+        }
+      });
+    }
+
+    function draw(now: number) {
+      ctx!.clearRect(0, 0, width, height);
+      if (!trainStart) return false;
+      const x = trainX(now);
+      if (x === null) {
+        trainStart = 0;
+        return false;
+      }
+      ctx!.fillStyle = accent;
+      // Two cars, the second one lower on the slope behind the first
+      const carWidth = (CAR[0].length + CAR_GAP) * PX;
+      drawSprite(CAR, x, crestDotY(x));
+      drawSprite(CAR, x - carWidth, crestDotY(x - carWidth));
+      return true;
+    }
+
+    function tick(now: number) {
+      frame = draw(now) ? requestAnimationFrame(tick) : 0;
+    }
+
+    // Is the point inside the mountain (below its crest, above the lake)?
+    function onMountain(event: PointerEvent | MouseEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      return y > crestY(x) && y < SKY + areaHeight() && ridgeAt(x, width, areaHeight()) > 0.3;
+    }
+
+    const onMove = (event: PointerEvent) => {
+      canvas!.style.cursor = !reduceMotion && onMountain(event) ? "pointer" : "";
+    };
+    const onClick = (event: MouseEvent) => {
+      if (reduceMotion || trainStart || !onMountain(event)) return;
+      accent = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+      trainStart = performance.now();
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+
+    resize();
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("click", onClick);
+    stop = () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("click", onClick);
+    };
+  }
+
+  document.addEventListener("astro:page-load", setUpScene);
+</script>
