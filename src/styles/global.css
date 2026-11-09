@@ -265,7 +265,8 @@ table {
 }
 
 /* Hero portrait: fade the bottom edge into the page instead of a hard crop line */
-.hero-portrait img {
+.hero-portrait img,
+.hero-portrait canvas {
   -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
   mask-image: linear-gradient(to bottom, #000 70%, transparent);
 }
@@ -340,4 +341,14 @@ table {
     animation: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------- Playful details ---------- */
+
+/* Theme switch: the new theme spreads as a circle from the toggle (clip-path animated in ThemeToggle.astro).
+   Wildcard because Astro's page transitions capture <html> under a generated name, not root */
+html.theme-reveal::view-transition-old(*),
+html.theme-reveal::view-transition-new(*) {
+  animation: none;
+  mix-blend-mode: normal;
 }

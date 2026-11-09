@@ -5,6 +5,7 @@ import ThemeToggle from "../components/ThemeToggle.astro";
 import ThemeSelector from "../components/ThemeSelector.astro";
 import FabFlower from "../components/FabFlower.astro";
 import Motion from "../components/Motion.astro";
+import ConsoleGreeting from "../components/ConsoleGreeting.astro";
 import { ClientRouter } from "astro:transitions";
 import { siteConfig } from "../config";
 import { url, isRelease } from "../utils/url";
@@ -100,6 +101,7 @@ const releaseName = import.meta.env.PUBLIC_RELEASE_NAME;
     <slot />
 
     <Motion />
+    <ConsoleGreeting />
 
     {
       siteConfig.extraLinks.enable && (
