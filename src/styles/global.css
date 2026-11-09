@@ -428,7 +428,7 @@ body::before {
   image-rendering: pixelated;
 }
 
-/* Space above the footer for the skyline drawn by BackgroundDither.astro */
+/* Space at the bottom of the page for the skyline drawn by BackgroundDither.astro */
 .signoff {
   position: relative;
   height: 160px;

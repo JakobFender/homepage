@@ -1,7 +1,7 @@
 ---
 // A field of tiny square dots behind the whole page, ordered-dithered like the hero portrait:
 // dense around the hero, thinning out down the page to a light scatter that reaches the very end,
-// and Pilatus over Lake Lucerne, traced from a photo, drawn in the .signoff space above the footer.
+// and Pilatus over Lake Lucerne, traced from a photo, drawn in the .signoff space at the bottom of the page.
 // Redrawn only when the page size or theme changes. A second, viewport-sized canvas lights up the
 // dots near the mouse in olive, fading back like disturbed sand.
 ---
@@ -49,11 +49,11 @@
     // Layout of the field, kept for the trail so it lights exactly the dots that are drawn
     let field = { width: 0, signoffTop: 0, signoff: 0, cx: 0, cy: 0, reach: 1 };
 
-    // Skyline above the footer: [density, dot kind] with kind 2 = mountain, 3 = lake
+    // Skyline at the bottom of the page: [density, dot kind] with kind 2 = mountain, 3 = lake
     function skyline(x: number, y: number): [number, number] {
       const { width, signoffTop: top, signoff } = field;
       if (!signoff || y < top || y >= top + signoff) return [0, 0];
-      const v = (y - top) / signoff; // 0 at the top of the area, 1 at its bottom (the footer line)
+      const v = (y - top) / signoff; // 0 at the top of the area, 1 at its bottom (the end of the page)
       const lakeTop = 1 - LAKE;
       if (v >= lakeTop) {
         // Lake: a few sparse rows of shimmer, thinning away from the shore
