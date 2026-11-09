@@ -30,9 +30,9 @@
   ];
   const PILATUS_ASPECT = 3; // drawn width as a multiple of the mountain area's height (photo: ~2.5)
   const LAKE = 0.22; // share of the sign-off area at the bottom that is lake
-  // Dot colors from --color-line towards --color-muted: the mountain a touch lighter than the lake
-  const MOUNTAIN_STRENGTH = 0.85;
-  const LAKE_STRENGTH = 1;
+  // Skyline dot color from --color-muted towards the text color, so it contrasts with the page in both
+  // themes: a darker grey on the light background, a light tone on the dark one
+  const SKYLINE_CONTRAST = 0.45;
 
   function sample(profile: number[], t: number) {
     const i = Math.min(Math.max(t, 0), 1) * (profile.length - 1);
@@ -143,11 +143,12 @@
       const styles = getComputedStyle(document.documentElement);
       const line = styles.getPropertyValue("--color-line").trim();
       const muted = styles.getPropertyValue("--color-muted").trim();
+      const text = styles.getPropertyValue("--color-base-content").trim();
       const colors = [
         "",
         mix(line, muted, STRENGTH),
-        mix(line, muted, MOUNTAIN_STRENGTH),
-        mix(line, muted, LAKE_STRENGTH),
+        mix(muted, text, SKYLINE_CONTRAST),
+        mix(muted, text, SKYLINE_CONTRAST),
       ];
 
       // Densest around where the portrait sits: right column on desktop, top left on mobile
