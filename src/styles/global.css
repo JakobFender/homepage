@@ -427,7 +427,7 @@ body::before {
 
 @media (min-width: 768px) {
   .signoff {
-    height: 200px;
+    height: 260px;
   }
 }
 
