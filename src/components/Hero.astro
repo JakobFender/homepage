@@ -104,9 +104,11 @@ const links = Object.entries(socialLinks ?? {}).filter(
     const img = wrapper?.querySelector("img");
     const canvas = wrapper?.querySelector("canvas");
     if (!wrapper || !img || !canvas) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // CSS hides the static portrait while JS can develop it; show it again whenever the canvas can't run
+    const showStatic = () => img.classList.add("is-static");
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return showStatic();
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) return showStatic();
 
     // Source image rendered once at display resolution; tiles are copied from it
     const source = document.createElement("canvas");
@@ -249,12 +251,9 @@ const links = Object.entries(socialLinks ?? {}).filter(
     };
 
     const start = () => {
-      if (!layout()) return;
-      // Developing replaces the CSS rise-in, and the canvas stays empty until it starts
-      wrapper!.parentElement!.classList.add("develops");
+      if (!layout()) return showStatic();
       ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
       canvas!.hidden = false;
-      img!.style.visibility = "hidden";
       developTimer = window.setTimeout(() => develop(), DEVELOP_DELAY);
       // Listen on the wrapper's parent so the push starts a little before the cursor reaches the face
       wrapper!.parentElement!.addEventListener("pointermove", onMove);
@@ -262,8 +261,16 @@ const links = Object.entries(socialLinks ?? {}).filter(
       window.addEventListener("resize", onResize);
     };
 
-    if (img.complete && img.naturalWidth) start();
-    else img.addEventListener("load", start, { once: true });
+    // Develop only once the whole page has loaded, so nothing else is still popping in around it
+    const whenReady = () => {
+      if (!img.complete) return; // the image's own load event calls this again
+      if (!img.naturalWidth) return showStatic(); // broken image: let the browser show its fallback
+      if (document.readyState === "complete") start();
+      else window.addEventListener("load", start, { once: true });
+    };
+    img.addEventListener("load", whenReady, { once: true });
+    img.addEventListener("error", showStatic, { once: true });
+    whenReady();
 
     stop = () => {
       cancelAnimationFrame(frame);
@@ -271,7 +278,9 @@ const links = Object.entries(socialLinks ?? {}).filter(
       wrapper!.parentElement!.removeEventListener("pointermove", onMove);
       wrapper!.parentElement!.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("resize", onResize);
-      img.removeEventListener("load", start);
+      window.removeEventListener("load", start);
+      img.removeEventListener("load", whenReady);
+      img.removeEventListener("error", showStatic);
     };
   }
 
