@@ -17,8 +17,8 @@
   const DECAY = 1400; // CSS px over which the hero density falls to about a third
   const STRENGTH = 0.35; // dot color: 0 = --color-line, 1 = --color-muted
   // Pilatus as seen from Lucerne, traced from a photo: heights above the lake shore (1 = summit),
-  // sampled evenly from left to right. BACK is the rocky summit ridge, FRONT the green foothills.
-  const PILATUS_BACK = [
+  // sampled evenly from left to right.
+  const PILATUS = [
     0.49, 0.5, 0.5, 0.51, 0.52, 0.54, 0.56, 0.57, 0.57, 0.57, 0.58, 0.59, 0.59, 0.59, 0.6, 0.62, 0.63,
     0.64, 0.64, 0.64, 0.65, 0.66, 0.67, 0.65, 0.66, 0.68, 0.69, 0.7, 0.7, 0.7, 0.72, 0.73, 0.75, 0.76,
     0.76, 0.78, 0.79, 0.8, 0.8, 0.79, 0.79, 0.81, 0.81, 0.83, 0.83, 0.85, 0.87, 0.89, 0.93, 0.93, 0.92,
@@ -28,22 +28,11 @@
     0.79, 0.78, 0.78, 0.76, 0.75, 0.74, 0.72, 0.71, 0.7, 0.68, 0.66, 0.67, 0.68, 0.67, 0.66, 0.63,
     0.64, 0.64, 0.65, 0.63, 0.67, 0.68, 0.68, 0.69,
   ];
-  const PILATUS_FRONT = [
-    0.39, 0.4, 0.4, 0.41, 0.41, 0.41, 0.42, 0.42, 0.43, 0.43, 0.44, 0.44, 0.44, 0.45, 0.45, 0.46, 0.46,
-    0.47, 0.47, 0.48, 0.48, 0.48, 0.49, 0.49, 0.5, 0.5, 0.5, 0.5, 0.51, 0.51, 0.51, 0.52, 0.52, 0.52,
-    0.53, 0.53, 0.53, 0.54, 0.54, 0.54, 0.55, 0.55, 0.55, 0.55, 0.56, 0.56, 0.56, 0.56, 0.57, 0.57,
-    0.57, 0.58, 0.58, 0.58, 0.58, 0.59, 0.59, 0.59, 0.6, 0.6, 0.6, 0.61, 0.61, 0.61, 0.61, 0.62, 0.62,
-    0.63, 0.63, 0.64, 0.64, 0.65, 0.65, 0.66, 0.66, 0.66, 0.67, 0.67, 0.67, 0.67, 0.68, 0.68, 0.68,
-    0.69, 0.69, 0.69, 0.69, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.69, 0.69, 0.69, 0.68, 0.68, 0.67, 0.67,
-    0.67, 0.66, 0.66, 0.66, 0.65, 0.65, 0.65, 0.64, 0.64, 0.64, 0.64, 0.63, 0.63, 0.63, 0.62, 0.62,
-    0.62, 0.62, 0.61, 0.61, 0.61, 0.6, 0.6, 0.6, 0.59,
-  ];
   const PILATUS_ASPECT = 3; // drawn width as a multiple of the mountain area's height (photo: ~2.5)
   const LAKE = 0.22; // share of the sign-off area at the bottom that is lake
-  // Dot colors from --color-line towards --color-muted: the mountain is drawn in grey, the far ridge
-  // a touch lighter than the foothills for depth
-  const BACK_STRENGTH = 0.85;
-  const FRONT_STRENGTH = 1;
+  // Dot colors from --color-line towards --color-muted: the mountain a touch lighter than the lake
+  const MOUNTAIN_STRENGTH = 0.85;
+  const LAKE_STRENGTH = 1;
 
   function sample(profile: number[], t: number) {
     const i = Math.min(Math.max(t, 0), 1) * (profile.length - 1);
@@ -52,20 +41,17 @@
     return profile[i0] + (profile[i1] - profile[i0]) * (i - i0);
   }
 
-  // Heights [back, front] at page x: Pilatus in the middle, low hills easing out towards the edges
-  function ridgeAt(x: number, width: number, areaHeight: number): [number, number] {
+  // Ridge height at page x: Pilatus in the middle, low hills easing out towards the edges
+  function ridgeAt(x: number, width: number, areaHeight: number) {
     const span = Math.min(width, PILATUS_ASPECT * areaHeight);
     const left = (width - span) / 2;
     const t = (x - left) / span;
-    if (t >= 0 && t <= 1) return [sample(PILATUS_BACK, t), sample(PILATUS_FRONT, t)];
+    if (t >= 0 && t <= 1) return sample(PILATUS, t);
     // Outside the massif: ease from its edge height down to low hills at the page edge
-    const edge = t < 0 ? 0 : 1;
     const away = t < 0 ? x / left : (width - x) / left; // 1 at the massif, 0 at the page edge
     const ease = (1 - Math.cos(Math.PI * Math.max(0, away))) / 2;
     const low = 0.1;
-    const front = low + (sample(PILATUS_FRONT, edge) - low) * ease;
-    const back = Math.max(front, low + 0.04 + (sample(PILATUS_BACK, edge) - low - 0.04) * ease);
-    return [back, front];
+    return low + (sample(PILATUS, t < 0 ? 0 : 1) - low) * ease;
   }
 
   const TRAIL_RADIUS = 48; // CSS px around the mouse whose dots light up
@@ -104,7 +90,7 @@
     // Layout of the field, kept for the trail so it lights exactly the dots that are drawn
     let field = { width: 0, signoffTop: 0, signoff: 0, cx: 0, cy: 0, reach: 1 };
 
-    // Skyline at the end of the page: [density, dot kind] with kind 2 = far ridge, 3 = foothills
+    // Skyline above the footer: [density, dot kind] with kind 2 = mountain, 3 = lake
     function skyline(x: number, y: number): [number, number] {
       const { width, signoffTop: top, signoff } = field;
       if (!signoff || y < top || y >= top + signoff) return [0, 0];
@@ -116,21 +102,16 @@
         return [row % 2 ? 0 : 0.35 * (1 - (v - lakeTop) / LAKE), 3];
       }
       const areaHeight = signoff * lakeTop;
-      const [back, front] = ridgeAt(x, width, areaHeight);
-      const up = (lakeTop - v) / lakeTop; // height above the shore, 0..1 like the profiles
-      // Both crests get a dot in every column so the outlines read as lines, not just as shading
-      if (up <= front) {
-        const fromCrest = (front - up) * areaHeight;
-        return [fromCrest < GRID ? 1 : 0.6, 3];
-      }
-      if (up <= back) {
-        const fromCrest = (back - up) * areaHeight;
-        return [fromCrest < GRID ? 1 : 0.3, 2];
-      }
-      return [0, 0];
+      const ridge = ridgeAt(x, width, areaHeight);
+      const up = (lakeTop - v) / lakeTop; // height above the shore, 0..1 like the profile
+      if (up > ridge) return [0, 0];
+      // The crest gets a dot in every column so the outline reads as a line; the body below gets
+      // denser towards the lake so the mountain reads as solid
+      const fromCrest = (ridge - up) * areaHeight;
+      return [fromCrest < GRID ? 1 : 0.3 + 0.25 * (1 - up / Math.max(ridge, 0.01)), 2];
     }
 
-    // 0 = no dot, 1 = field dot, 2 = far ridge, 3 = foothills and lake
+    // 0 = no dot, 1 = field dot, 2 = mountain, 3 = lake
     function dotAt(x: number, y: number) {
       const { cx, cy, reach } = field;
       const threshold = BAYER[((y / GRID) % 8) * 8 + ((x / GRID) % 8)];
@@ -165,8 +146,8 @@
       const colors = [
         "",
         mix(line, muted, STRENGTH),
-        mix(line, muted, BACK_STRENGTH),
-        mix(line, muted, FRONT_STRENGTH),
+        mix(line, muted, MOUNTAIN_STRENGTH),
+        mix(line, muted, LAKE_STRENGTH),
       ];
 
       // Densest around where the portrait sits: right column on desktop, top left on mobile
