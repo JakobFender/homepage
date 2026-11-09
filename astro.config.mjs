@@ -17,5 +17,6 @@ export default defineConfig({
         rehypePlugins: [rehypeKatex],
     },
     site: "https://jakob-fender.ch",
-    base: "/",
+    // Release builds of other branches set BASE_PATH=/release/<branch>/ (see .github/workflows/deploy.yaml)
+    base: process.env.BASE_PATH || "/",
 });

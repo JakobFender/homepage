@@ -1,10 +1,11 @@
 ---
+import { url } from "../utils/url";
 const { src, alt, caption } = Astro.props;
 ---
 
 <figure class="my-8 flex flex-col items-center">
     <img
-            src={src}
+            src={url(src)}
             alt={alt}
             class="max-w-full rounded-xs border border-line"
     />

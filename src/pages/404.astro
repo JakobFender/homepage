@@ -1,4 +1,5 @@
 ---
+import { url } from "../utils/url";
 import Layout from "../layouts/Layout.astro";
 ---
 
@@ -24,10 +25,10 @@ import Layout from "../layouts/Layout.astro";
 
       <!-- Action Buttons -->
       <div class="flex gap-4 justify-center flex-wrap mt-8">
-        <a href="/" class="btn btn-primary">
+        <a href={url("/")} class="btn btn-primary">
           Go home
         </a>
-        <a href="/#projects" class="btn btn-outline">
+        <a href={url("/#projects")} class="btn btn-outline">
           View projects
         </a>
       </div>
@@ -38,12 +39,12 @@ import Layout from "../layouts/Layout.astro";
           You might be looking for:
         </p>
         <div class="flex gap-3 justify-center flex-wrap text-sm">
-          <a href="/blog" class="link link-hover">Blog</a>
+          <a href={url("/blog")} class="link link-hover">Blog</a>
           <span class="text-muted">·</span>
-          <a href="/#about" class="link link-hover">About</a>
+          <a href={url("/#about")} class="link link-hover">About</a>
           <span class="text-muted">·</span>
           <a
-            href="/blog/guides/bloomfolio-complete-guide"
+            href={url("/blog/guides/bloomfolio-complete-guide")}
             class="link link-hover">Documentation</a
           >
         </div>
