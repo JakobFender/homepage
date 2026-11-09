@@ -271,6 +271,22 @@ table {
   mask-image: linear-gradient(to bottom, #000 70%, transparent);
 }
 
+/* Work timeline: hovering an entry turns its marker into a diamond with a thin ring around it */
+.tl-marker {
+  outline: 1px solid transparent;
+  outline-offset: 0;
+  transition:
+    rotate 200ms var(--ease-out),
+    outline-color 200ms var(--ease-out),
+    outline-offset 200ms var(--ease-out);
+}
+
+.tl-entry:hover .tl-marker {
+  rotate: 45deg;
+  outline-color: var(--color-primary);
+  outline-offset: 3px;
+}
+
 /* ---------- Motion (all of it is skipped under prefers-reduced-motion) ---------- */
 
 @keyframes fade-up {
@@ -322,8 +338,12 @@ table {
 
     /* Work timeline markers pop in after their entry */
     [data-reveal] .tl-marker {
-      transition: scale 250ms var(--ease-out);
-      transition-delay: calc(var(--reveal-delay, 0ms) + 150ms);
+      /* The pop-in keeps its delay; the hover turn (see .tl-entry) starts immediately */
+      transition:
+        scale 250ms var(--ease-out) calc(var(--reveal-delay, 0ms) + 150ms),
+        rotate 200ms var(--ease-out),
+        outline-color 200ms var(--ease-out),
+        outline-offset 200ms var(--ease-out);
     }
 
     [data-reveal]:not(.is-visible) .tl-marker {
