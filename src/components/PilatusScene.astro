@@ -1,7 +1,8 @@
 ---
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
-// In dark mode, stars twinkle above the ridge next to a small crescent moon.
+// In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
+// across the lake.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -19,6 +20,13 @@
   const REST = 1200; // ms at the summit
   const DESCEND = 4000; // ms back down
   const STAR_SPACING = 40; // CSS px of width per star
+  // Rowboat with a rower, two frames for the stroke: oars raised, then level in the water
+  const BOAT = [
+    ["     #     ", "    ###    ", "  ## # ##  ", " ######### ", "  #######  "],
+    ["     #     ", "    ###    ", "#   ###   #", " ######### ", "  #######  "],
+  ];
+  const STROKE = 600; // ms per oar position
+  const DRIFT = 70000; // ms to cross the whole lake
   // Crescent moon, one character per CSS px
   const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
@@ -143,14 +151,37 @@
       drawSprite(CAR, x - carWidth, crestDotY(x - carWidth));
     }
 
+    function drawBoat(now: number) {
+      const sprite = BOAT[reduceMotion ? 1 : Math.floor(now / STROKE) % 2];
+      const boatWidth = sprite[0].length * PX;
+      // Drift left to right and wrap around; moored near the left shore under reduced motion
+      const progress = reduceMotion ? 0.2 : (now / DRIFT + 0.3) % 1;
+      const x = Math.round(-boatWidth + progress * (width + boatWidth * 2));
+      // Float on the upper part of the lake, bobbing by a pixel
+      const water = SKY + areaHeight() + (height - SKY - areaHeight()) * 0.45;
+      const bob = reduceMotion ? 0 : Math.round(Math.sin(now / 900));
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = 0.75;
+      drawSprite(sprite, x, water + bob);
+      // A short wake behind the boat
+      if (!reduceMotion) {
+        ctx!.globalAlpha = 0.35;
+        ctx!.fillRect(x - boatWidth / 2 - 10, Math.round(water) + 1, 6, 1);
+        ctx!.fillRect(x - boatWidth / 2 - 20, Math.round(water) + 2, 4, 1);
+      }
+      ctx!.globalAlpha = 1;
+    }
+
     function draw(now: number) {
       ctx!.clearRect(0, 0, width, height);
       if (dark) drawSky(now);
+      drawBoat(now);
       drawTrain(now);
     }
 
-    // Animate only while on screen and something moves: a train trip, or twinkling stars
-    const animating = () => visible && (trainStart > 0 || (dark && !reduceMotion));
+    // Animate only while on screen and something moves; the drifting boat always does,
+    // except under reduced motion, where only a train trip would
+    const animating = () => visible && (trainStart > 0 || !reduceMotion);
 
     function tick(now: number) {
       draw(now);
