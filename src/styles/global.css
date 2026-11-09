@@ -264,6 +264,12 @@ table {
   @apply table table-zebra table-sm;
 }
 
+/* Hero portrait: fade the bottom edge into the page instead of a hard crop line */
+.hero-portrait img {
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+
 /* ---------- Motion (all of it is skipped under prefers-reduced-motion) ---------- */
 
 @keyframes fade-up {
