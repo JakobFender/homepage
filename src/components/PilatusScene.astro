@@ -2,7 +2,7 @@
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
 // In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
-// across the lake.
+// across the lake. By day, a single-engine turboprop flies across the sky.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -27,6 +27,18 @@
   ];
   const STROKE = 600; // ms per oar position
   const DRIFT = 70000; // ms to cross the whole lake
+  // Single-engine turboprop with a T-tail, nose to the right; the propeller is drawn separately
+  const PLANE = [
+    "####              ",
+    " ##               ",
+    " ###############  ",
+    "  ## # # # #  ####",
+    "   ############## ",
+    "       ######     ",
+  ];
+  const PROP = [["#", "#", "#"], [" ", "#", " "]]; // spinning propeller: blade across, then edge-on
+  const FLIGHT = 28000; // ms to cross the sky
+  const FLIGHT_GAP = 22000; // ms out of sight before the next flight
   // Crescent moon, one character per CSS px
   const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
@@ -172,9 +184,31 @@
       ctx!.globalAlpha = 1;
     }
 
+    function drawPlane(now: number) {
+      const planeWidth = PLANE[0].length * PX;
+      // Left to right across the sky, then a pause off screen; parked high on the left under reduced motion
+      const t = reduceMotion ? 0.15 : ((now + FLIGHT * 0.5) % (FLIGHT + FLIGHT_GAP)) / FLIGHT;
+      if (t > 1) return;
+      const x = Math.round(-planeWidth + t * (width + planeWidth * 2));
+      // Cruise high in the sky with a gentle rise and fall
+      const bottom = 26 + (reduceMotion ? 0 : Math.round(Math.sin(now / 2500) * 2));
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = 0.75;
+      drawSprite(PLANE, x, bottom);
+      // Propeller in front of the nose, flickering between two blade positions
+      ctx!.globalAlpha = 0.5;
+      const prop = PROP[reduceMotion ? 0 : Math.floor(now / 60) % 2];
+      const noseX = Math.round(x) + planeWidth / 2;
+      prop.forEach((pixel, ry) => {
+        if (pixel === "#") ctx!.fillRect(noseX, Math.round(bottom) - (PLANE.length - 2 - ry) * PX, PX, PX);
+      });
+      ctx!.globalAlpha = 1;
+    }
+
     function draw(now: number) {
       ctx!.clearRect(0, 0, width, height);
       if (dark) drawSky(now);
+      else drawPlane(now);
       drawBoat(now);
       drawTrain(now);
     }
