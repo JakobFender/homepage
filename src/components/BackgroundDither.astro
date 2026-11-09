@@ -1,0 +1,104 @@
+---
+// A field of tiny square dots behind the whole page, ordered-dithered like the hero portrait:
+// dense around the hero, thinning out down the page to a light scatter that reaches the very end.
+// Redrawn only when the page size or theme changes; static, no animation.
+---
+
+<canvas class="bg-dither" aria-hidden="true"></canvas>
+
+<script>
+  const GRID = 4; // CSS px between dot positions
+  const DOT = 1; // CSS px dot size
+  const MAX_DENSITY = 0.75; // share of positions filled at the densest point, around the portrait
+  const FLOOR = 0.12; // share of MAX_DENSITY that remains everywhere, down to the end of the page
+  const DECAY = 1400; // CSS px over which the hero density falls to about a third
+  const STRENGTH = 0.35; // dot color: 0 = --color-line, 1 = --color-muted
+
+  // 8x8 Bayer matrix: thresholds in [0, 1) that turn a smooth density into an even dot pattern
+  const BAYER = Array.from({ length: 64 }, (_, i) => {
+    const x = i % 8;
+    const y = Math.floor(i / 8);
+    let value = 0;
+    for (let bit = 0, xr = x, yx = x ^ y; bit < 3; bit++, xr >>= 1, yx >>= 1) {
+      value = (value << 2) | ((yx & 1) << 1) | (xr & 1);
+    }
+    return (value + 0.5) / 64;
+  });
+
+  // Mix two #rrggbb colors; falls back to the first color for any other format
+  function mix(a: string, b: string, t: number) {
+    const parse = (hex: string) => hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)?.slice(1).map((h) => parseInt(h, 16));
+    const ca = parse(a);
+    const cb = parse(b);
+    if (!ca || !cb || t <= 0) return a;
+    return `rgb(${ca.map((v, i) => Math.round(v + (cb[i] - v) * t)).join(" ")})`;
+  }
+
+  let stop: (() => void) | undefined;
+
+  function setUpDither() {
+    stop?.();
+    const canvas = document.querySelector<HTMLCanvasElement>(".bg-dither");
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    let last = "";
+
+    function draw(force = false) {
+      // Measure the page without the canvas itself, which would otherwise keep the old height
+      canvas!.style.height = "0px";
+      const width = document.documentElement.clientWidth;
+      const height = document.documentElement.scrollHeight;
+      canvas!.style.height = `${height}px`;
+      const size = `${width}x${height}`;
+      if (!force && size === last) return; // e.g. mobile URL bars resize only the viewport
+      last = size;
+
+      // One canvas pixel per CSS pixel keeps a full-page canvas within mobile size limits;
+      // image-rendering: pixelated keeps the dots crisp on high-density screens
+      canvas!.width = width;
+      canvas!.height = height;
+      ctx!.clearRect(0, 0, width, height);
+      const styles = getComputedStyle(document.documentElement);
+      ctx!.fillStyle = mix(
+        styles.getPropertyValue("--color-line").trim(),
+        styles.getPropertyValue("--color-muted").trim(),
+        STRENGTH
+      );
+
+      // Densest around where the portrait sits: right column on desktop, top left on mobile
+      const cx = width >= 1024 ? width * 0.72 : width * 0.3;
+      const cy = width >= 1024 ? 300 : 200;
+      const reach = Math.max(width * 0.45, 520);
+
+      for (let y = 0, row = 0; y < height; y += GRID, row++) {
+        const hero = Math.exp(-y / DECAY);
+        for (let x = 0, col = 0; x < width; x += GRID, col++) {
+          const proximity = Math.max(0, 1 - Math.hypot(x - cx, (y - cy) * 1.3) / reach);
+          const density = MAX_DENSITY * (FLOOR + (1 - FLOOR) * hero * (0.15 + 0.85 * proximity ** 1.5));
+          if (density > BAYER[(row % 8) * 8 + (col % 8)]) ctx!.fillRect(x, y, DOT, DOT);
+        }
+      }
+    }
+
+    draw(true);
+    // Page height changes with fonts loading, <details> opening and viewport width
+    let timer = 0;
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => draw(), 150);
+    };
+    const resizeObserver = new ResizeObserver(schedule);
+    resizeObserver.observe(document.body);
+    // Redraw in the other theme's colors when the theme toggle flips data-theme
+    const themeObserver = new MutationObserver(() => draw(true));
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    stop = () => {
+      clearTimeout(timer);
+      resizeObserver.disconnect();
+      themeObserver.disconnect();
+    };
+  }
+
+  document.addEventListener("astro:page-load", setUpDither);
+</script>
