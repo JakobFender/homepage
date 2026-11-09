@@ -2,7 +2,10 @@
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
 // In dark mode, stars twinkle above the ridge next to a small crescent moon. A rowboat drifts
-// across the lake.
+// across the lake and a paddle steamer crosses it the other way. An aerial cable car shuttles on five
+// posts down the right flank, from the summit to the foot of the mountain. In the foreground, the
+// covered Chapel Bridge (Kapellbrücke) crosses the water with the octagonal Water Tower behind it.
+// By day, a single-engine turboprop flies across the sky. Clouds drift very slowly by day and night.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -27,6 +30,105 @@
   ];
   const STROKE = 600; // ms per oar position
   const DRIFT = 70000; // ms to cross the whole lake
+  // Aerial cable car cabin: a slim hanger from the cable and a cabin two windows wide with a rounded roof
+  const CABIN = ["  #  ", "  #  ", " ### ", "# # #", "#####"];
+  const RIDE = 16000; // ms from one station to the other
+  const POSTS = 5; // stations and pylons along the cableway
+  const DWELL = 2500; // ms at each station
+  // Water Tower next to the Chapel Bridge: r steep pointed roof whose eave reaches past the timber storey,
+  // w plain timber storey overhanging the stone, # octagonal stone tower with a small window near the top
+  const TOWER = [
+    "       r       ",
+    "       r       ",
+    "       r       ",
+    "      rrr      ",
+    "      rrr      ",
+    "     rrrrr     ",
+    "     rrrrr     ",
+    "    rrrrrrr    ",
+    "    rrrrrrr    ",
+    "   rrrrrrrrr   ",
+    "   rrrrrrrrr   ",
+    "  rrrrrrrrrrr  ",
+    "  rrrrrrrrrrr  ",
+    " rrrrrrrrrrrrr ",
+    "rrrrrrrrrrrrrrr",
+    " wwwwwwwwwwwww ",
+    " wwwwwwwwwwwww ",
+    "  ###########  ",
+    "  ##### #####  ",
+    "  ##### #####  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+    "  ###########  ",
+  ];
+  const TOWER_ALPHA: Record<string, number> = { r: 0.9, w: 0.8, "#": 0.7 };
+  // Paddle steamer, bow to the left, dressed overall: strings of pennants from the bow over both masts
+  // to the stern, masts raked back, a funnel, the deck saloon and the paddle box, sitting low in the water
+  const STEAMER = [
+    "    #                   #  ",
+    "    # #     ##        # #  ",
+    "  # #   # # ## # # #    #  ",
+    "   #        ##         #  #",
+    " # #     ########      #   ",
+    "   #   ############    ##  ",
+    " ########################  ",
+    "## # # # # ##### # # # # ##",
+    "###########################",
+    " ######################### ",
+  ];
+  const SAIL = 90000; // ms for the steamer to cross the whole lake
+  const PUFF = 900; // ms between smoke puffs
+  // Single-engine turboprop with a T-tail, nose to the right; the propeller is drawn separately
+  const PLANE = [
+    "####              ",
+    " ##               ",
+    " ###############  ",
+    "  ## # # # #  ####",
+    "   ############## ",
+    "       ######     ",
+  ];
+  const PROP = [["#", "#", "#"], [" ", "#", " "]]; // spinning propeller: blade across, then edge-on
+  const FLIGHT = 28000; // ms to cross the sky
+  const FLIGHT_GAP = 22000; // ms out of sight before the next flight
+  // Clouds, one character per sprite pixel
+  const CLOUDS = [
+    [
+      "         #####          ",
+      "     ##########   ###   ",
+      "   ###################  ",
+      " ###################### ",
+      "########################",
+    ],
+    [
+      "     ####       ",
+      "  ##########    ",
+      " ############## ",
+      "################",
+    ],
+    [
+      "            ####              ",
+      "    ####  ########    ###     ",
+      "  ########################### ",
+      " ############################ ",
+      "##############################",
+    ],
+  ];
+  const CLOUD_SPACING = 320; // CSS px of width per cloud
+  const CLOUD_DRIFT = 420000; // ms for an average cloud to cross the whole sky
   // Crescent moon, one character per CSS px
   const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
@@ -50,6 +152,8 @@
     type Star = { x: number; y: number; size: number; phase: number; speed: number };
     let stars: Star[] = [];
     let moon = { x: 0, y: 0 };
+    type Cloud = { shape: string[]; y: number; offset: number; speed: number };
+    let clouds: Cloud[] = [];
 
     // Geometry of the .signoff space, which starts SKY px below the canvas top
     const areaHeight = () => (height - SKY) * (1 - LAKE);
@@ -81,6 +185,14 @@
         // size 2: a 2px star; size 3: a bright one, drawn as a small cross
         stars.push({ x, y, size: random() < 0.2 ? 3 : 2, phase: random() * Math.PI * 2, speed: 0.6 + random() * 1.4 });
       }
+      // Clouds high in the sky, each at its own height, starting point and speed
+      const cloudCount = Math.max(2, Math.round(width / CLOUD_SPACING));
+      clouds = Array.from({ length: cloudCount }, (_, i) => ({
+        shape: CLOUDS[i % CLOUDS.length],
+        y: Math.round(10 + random() * 26),
+        offset: (i + random() * 0.6) / cloudCount,
+        speed: 0.7 + random() * 0.6,
+      }));
       // Moon to the right of the summit, high in the sky
       const { summit } = route();
       moon = { x: Math.round(Math.min(width - 24, summit + Math.max(90, width * 0.16))), y: 6 };
@@ -104,6 +216,18 @@
       MOON.forEach((row, ry) => {
         for (let rx = 0; rx < row.length; rx++) if (row[rx] === "#") ctx!.fillRect(moon.x + rx, moon.y + ry, 1, 1);
       });
+      ctx!.globalAlpha = 1;
+    }
+
+    // Clouds drift left to right and wrap around; still under reduced motion
+    function drawClouds(now: number) {
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = dark ? 0.1 : 0.08;
+      for (const cloud of clouds) {
+        const cloudWidth = cloud.shape[0].length * PX;
+        const progress = (cloud.offset + (reduceMotion ? 0 : (now / CLOUD_DRIFT) * cloud.speed)) % 1;
+        drawSprite(cloud.shape, -cloudWidth + progress * (width + cloudWidth * 2), cloud.y);
+      }
       ctx!.globalAlpha = 1;
     }
 
@@ -137,6 +261,20 @@
       });
     }
 
+    // Faint mirror image of a sprite below the water line at bottom, every other row like ripples,
+    // as far as the canvas reaches
+    function drawReflection(sprite: string[], x: number, bottom: number) {
+      const left = Math.round(x) - (sprite[0].length * PX) / 2;
+      const water = Math.round(bottom);
+      ctx!.globalAlpha = 0.15;
+      for (let ry = 0; ry < sprite.length && water + ry * PX < height; ry += 2) {
+        const row = sprite[sprite.length - 1 - ry];
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] !== " ") ctx!.fillRect(left + rx * PX, water + ry * PX, PX, PX);
+        }
+      }
+    }
+
     function drawTrain(now: number) {
       if (!trainStart) return;
       const x = trainX(now);
@@ -163,6 +301,7 @@
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       ctx!.globalAlpha = 0.75;
       drawSprite(sprite, x, water + bob);
+      drawReflection(sprite, x, water + bob);
       // A short wake behind the boat
       if (!reduceMotion) {
         ctx!.globalAlpha = 0.35;
@@ -172,10 +311,171 @@
       ctx!.globalAlpha = 1;
     }
 
+    // The cableway runs from just right of the summit down the right flank to a valley station near the
+    // foot of the mountain, on five posts: the two stations and three pylons spaced evenly between them.
+    // Each span is straight; posts are raised wherever needed so the cable clears the ridge.
+    function cableway() {
+      const { summit } = route();
+      const top = summit + 12; // clear of the train at the summit
+      let valley = top;
+      while (valley < width - 8 && crestY(valley) < SKY + areaHeight() * 0.86) valley += 2;
+      const xs = Array.from({ length: POSTS }, (_, i) => Math.round(top + ((valley - top) * i) / (POSTS - 1)));
+      const ys = xs.map((x) => crestDotY(x) - 6);
+      // How far each span must rise to stay 4px above the crest; a post takes the larger of its two spans
+      const lifts = xs.slice(1).map((lower, i) => {
+        const upper = xs[i];
+        let lift = 0;
+        for (let x = upper; x <= lower; x += 2) {
+          const y = ys[i] + ((ys[i + 1] - ys[i]) * (x - upper)) / (lower - upper || 1);
+          lift = Math.max(lift, y - (crestY(x) - 4));
+        }
+        return lift;
+      });
+      const posts = xs.map((x, i) => ({ x, y: Math.round(ys[i] - Math.max(lifts[i - 1] ?? 0, lifts[i] ?? 0)) }));
+      // Cable height at x, along the span that contains it
+      const y = (x: number) => {
+        const i = Math.max(0, Math.min(POSTS - 2, posts.findIndex((p) => p.x >= x) - 1));
+        const [a, b] = [posts[i], posts[i + 1]];
+        return Math.round(a.y + ((b.y - a.y) * (x - a.x)) / (b.x - a.x || 1));
+      };
+      return { posts, top, valley, y };
+    }
+
+    function drawCableway(now: number) {
+      const { posts, top, valley, y } = cableway();
+      if (valley - top < 40) return;
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      // Cable, then the posts down to the crest dots with a crossbar on top
+      ctx!.globalAlpha = 0.5;
+      for (let x = top; x <= valley; x++) ctx!.fillRect(x, y(x), 1, 1);
+      for (const post of posts) {
+        ctx!.fillRect(post.x - 1, post.y, 2, crestDotY(post.x) - post.y);
+        ctx!.fillRect(post.x - 3, post.y, 6, 1);
+      }
+      // One cabin: up to the summit, wait, back down to the valley, wait; parked in the valley under
+      // reduced motion
+      const elapsed = reduceMotion ? 0 : now % (2 * (RIDE + DWELL));
+      let t = 0; // 0 at the valley station, 1 at the summit
+      if (elapsed < RIDE) t = ease(elapsed / RIDE);
+      else if (elapsed < RIDE + DWELL) t = 1;
+      else if (elapsed < 2 * RIDE + DWELL) t = 1 - ease((elapsed - RIDE - DWELL) / RIDE);
+      // Stop a little short of the station posts so the cabin waits beside them
+      const stop = (CABIN[0].length * PX) / 2 + 3;
+      const x = Math.round(valley - stop + (top + stop - (valley - stop)) * t);
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+      ctx!.globalAlpha = 1;
+      // Hang the cabin from the cable: its top row sits on the cable line
+      drawSprite(CABIN, x, y(x) + (CABIN.length - 1) * PX + 1);
+    }
+
+    // The Chapel Bridge runs out from the left shore on trestles, the Water Tower stands just behind it.
+    // Both hide whatever passes behind them, except through the open gallery under the roof.
+    function drawBridge() {
+      const lakeTop = SKY + areaHeight();
+      const water = Math.round(lakeTop + (height - lakeTop) * 0.62);
+      const deck = water - 8; // bottom of the bridge wall, trestles below it
+      const left = -2 * PX;
+      const length = Math.min(Math.round(width * 0.38), 420);
+      const right = left + length;
+      const towerX = Math.round(left + length * 0.72);
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      // Tower first, so the bridge passes in front of it
+      const towerWidth = TOWER[0].length * PX;
+      const towerLeft = towerX - towerWidth / 2;
+      const towerTop = water - TOWER.length * PX;
+      TOWER.forEach((row, ry) => {
+        for (let rx = 0; rx < row.length; rx++) {
+          if (row[rx] === " ") continue;
+          ctx!.clearRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+          ctx!.globalAlpha = TOWER_ALPHA[row[rx]];
+          ctx!.fillRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+        }
+      });
+      drawReflection(TOWER, towerX, water);
+      // Roof band and bridge wall hide what is behind them; sized in CSS px, finer than the sprites
+      const roofTop = deck - 11;
+      const roofBottom = deck - 7;
+      const wallTop = deck - 3;
+      ctx!.clearRect(left, roofTop, length + 4, roofBottom - roofTop);
+      ctx!.clearRect(left, wallTop, length + 4, deck - wallTop);
+      ctx!.globalAlpha = 0.8;
+      ctx!.fillRect(left + 3, roofTop, length - 2, 1); // ridge
+      ctx!.fillRect(left, roofTop + 1, length + 4, roofBottom - roofTop - 1); // roof with eaves
+      ctx!.fillRect(left, wallTop, length + 4, deck - wallTop); // wall
+      // Open gallery: posts under the roof
+      ctx!.globalAlpha = 0.6;
+      for (let x = left + 3; x <= right; x += 8) ctx!.fillRect(x, roofBottom, 1, wallTop - roofBottom);
+      // Trestles down into the water: two piles with a cross brace
+      for (let x = left + 10; x < right - 6; x += 26) {
+        ctx!.fillRect(x, deck, 2, water - deck);
+        ctx!.fillRect(x + 8, deck, 2, water - deck);
+        ctx!.fillRect(x, deck + 2, 10, 1);
+      }
+      ctx!.globalAlpha = 1;
+    }
+
+    function drawSteamer(now: number) {
+      const steamerWidth = STEAMER[0].length * PX;
+      // Right to left and wrap around; moored near the right shore under reduced motion
+      const progress = reduceMotion ? 0.8 : 1 - ((now / SAIL + 0.15) % 1);
+      const x = Math.round(-steamerWidth + progress * (width + steamerWidth * 2));
+      // Lower on the lake than the rowboat, so nearer to the viewer
+      const water = SKY + areaHeight() + (height - SKY - areaHeight()) * 0.85;
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = 0.75;
+      drawSprite(STEAMER, x, water);
+      drawReflection(STEAMER, x, water);
+      if (reduceMotion) {
+        ctx!.globalAlpha = 1;
+        return;
+      }
+      // Smoke puffs rising from the funnel and drifting back behind the stern as they fade
+      const funnelX = Math.round(x) - steamerWidth / 2 + 12 * PX;
+      const funnelTop = Math.round(water) - STEAMER.length * PX;
+      for (let i = 0; i < 4; i++) {
+        const age = ((now / PUFF + i) % 4) / 4; // 0 fresh, 1 gone
+        const size = age < 0.5 ? 2 : 3;
+        ctx!.globalAlpha = 0.45 * (1 - age);
+        ctx!.fillRect(funnelX + Math.round(age * 22), funnelTop - 3 - Math.round(age * 10), size, size);
+      }
+      // Wake behind the stern
+      ctx!.globalAlpha = 0.35;
+      const stern = Math.round(x) + steamerWidth / 2;
+      ctx!.fillRect(stern + 4, Math.round(water) - 1, 8, 1);
+      ctx!.fillRect(stern + 16, Math.round(water), 5, 1);
+      ctx!.globalAlpha = 1;
+    }
+
+    function drawPlane(now: number) {
+      const planeWidth = PLANE[0].length * PX;
+      // Left to right across the sky, then a pause off screen; parked high on the left under reduced motion
+      const t = reduceMotion ? 0.15 : ((now + FLIGHT * 0.5) % (FLIGHT + FLIGHT_GAP)) / FLIGHT;
+      if (t > 1) return;
+      const x = Math.round(-planeWidth + t * (width + planeWidth * 2));
+      // Cruise high in the sky with a gentle rise and fall
+      const bottom = 26 + (reduceMotion ? 0 : Math.round(Math.sin(now / 2500) * 2));
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = 0.75;
+      drawSprite(PLANE, x, bottom);
+      // Propeller in front of the nose, flickering between two blade positions
+      ctx!.globalAlpha = 0.5;
+      const prop = PROP[reduceMotion ? 0 : Math.floor(now / 60) % 2];
+      const noseX = Math.round(x) + planeWidth / 2;
+      prop.forEach((pixel, ry) => {
+        if (pixel === "#") ctx!.fillRect(noseX, Math.round(bottom) - (PLANE.length - 2 - ry) * PX, PX, PX);
+      });
+      ctx!.globalAlpha = 1;
+    }
+
     function draw(now: number) {
       ctx!.clearRect(0, 0, width, height);
       if (dark) drawSky(now);
+      drawClouds(now);
+      if (!dark) drawPlane(now);
+      drawCableway(now);
       drawBoat(now);
+      drawBridge();
+      drawSteamer(now);
       drawTrain(now);
     }
 
