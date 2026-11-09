@@ -5,7 +5,7 @@
 // across the lake and a paddle steamer crosses it the other way. An aerial cable car shuttles on five
 // posts down the right flank, from the summit to the foot of the mountain. In the foreground, the
 // covered Chapel Bridge (Kapellbrücke) crosses the water with the octagonal Water Tower behind it.
-// By day, a single-engine turboprop flies across the sky.
+// By day, a single-engine turboprop flies across the sky. Clouds drift very slowly by day and night.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -104,6 +104,31 @@
   const PROP = [["#", "#", "#"], [" ", "#", " "]]; // spinning propeller: blade across, then edge-on
   const FLIGHT = 28000; // ms to cross the sky
   const FLIGHT_GAP = 22000; // ms out of sight before the next flight
+  // Clouds, one character per sprite pixel
+  const CLOUDS = [
+    [
+      "         #####          ",
+      "     ##########   ###   ",
+      "   ###################  ",
+      " ###################### ",
+      "########################",
+    ],
+    [
+      "     ####       ",
+      "  ##########    ",
+      " ############## ",
+      "################",
+    ],
+    [
+      "            ####              ",
+      "    ####  ########    ###     ",
+      "  ########################### ",
+      " ############################ ",
+      "##############################",
+    ],
+  ];
+  const CLOUD_SPACING = 320; // CSS px of width per cloud
+  const CLOUD_DRIFT = 420000; // ms for an average cloud to cross the whole sky
   // Crescent moon, one character per CSS px
   const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
@@ -127,6 +152,8 @@
     type Star = { x: number; y: number; size: number; phase: number; speed: number };
     let stars: Star[] = [];
     let moon = { x: 0, y: 0 };
+    type Cloud = { shape: string[]; y: number; offset: number; speed: number };
+    let clouds: Cloud[] = [];
 
     // Geometry of the .signoff space, which starts SKY px below the canvas top
     const areaHeight = () => (height - SKY) * (1 - LAKE);
@@ -158,6 +185,14 @@
         // size 2: a 2px star; size 3: a bright one, drawn as a small cross
         stars.push({ x, y, size: random() < 0.2 ? 3 : 2, phase: random() * Math.PI * 2, speed: 0.6 + random() * 1.4 });
       }
+      // Clouds high in the sky, each at its own height, starting point and speed
+      const cloudCount = Math.max(2, Math.round(width / CLOUD_SPACING));
+      clouds = Array.from({ length: cloudCount }, (_, i) => ({
+        shape: CLOUDS[i % CLOUDS.length],
+        y: Math.round(10 + random() * 26),
+        offset: (i + random() * 0.6) / cloudCount,
+        speed: 0.7 + random() * 0.6,
+      }));
       // Moon to the right of the summit, high in the sky
       const { summit } = route();
       moon = { x: Math.round(Math.min(width - 24, summit + Math.max(90, width * 0.16))), y: 6 };
@@ -181,6 +216,18 @@
       MOON.forEach((row, ry) => {
         for (let rx = 0; rx < row.length; rx++) if (row[rx] === "#") ctx!.fillRect(moon.x + rx, moon.y + ry, 1, 1);
       });
+      ctx!.globalAlpha = 1;
+    }
+
+    // Clouds drift left to right and wrap around; still under reduced motion
+    function drawClouds(now: number) {
+      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.globalAlpha = dark ? 0.1 : 0.08;
+      for (const cloud of clouds) {
+        const cloudWidth = cloud.shape[0].length * PX;
+        const progress = (cloud.offset + (reduceMotion ? 0 : (now / CLOUD_DRIFT) * cloud.speed)) % 1;
+        drawSprite(cloud.shape, -cloudWidth + progress * (width + cloudWidth * 2), cloud.y);
+      }
       ctx!.globalAlpha = 1;
     }
 
@@ -423,7 +470,8 @@
     function draw(now: number) {
       ctx!.clearRect(0, 0, width, height);
       if (dark) drawSky(now);
-      else drawPlane(now);
+      drawClouds(now);
+      if (!dark) drawPlane(now);
       drawCableway(now);
       drawBoat(now);
       drawBridge();
