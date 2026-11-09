@@ -1,6 +1,7 @@
 ---
 // A field of tiny square dots behind the whole page, ordered-dithered like the hero portrait:
-// dense around the hero, thinning out down the page to a light scatter that reaches the very end.
+// dense around the hero, thinning out down the page to a light scatter that reaches the very end,
+// where the dots gather into a small skyline: Pilatus over Lake Lucerne (in the .signoff spacer).
 // Redrawn only when the page size or theme changes. A second, viewport-sized canvas lights up the
 // dots near the mouse in olive, fading back like disturbed sand.
 ---
@@ -15,6 +16,28 @@
   const FLOOR = 0.12; // share of MAX_DENSITY that remains everywhere, down to the end of the page
   const DECAY = 1400; // CSS px over which the hero density falls to about a third
   const STRENGTH = 0.35; // dot color: 0 = --color-line, 1 = --color-muted
+  // Skyline ridge as (x, height) points, both 0..1 of the sign-off area above the lake:
+  // the jagged Pilatus massif on the left, gentler hills towards the right
+  const RIDGE = [
+    [0, 0.22], [0.08, 0.3], [0.15, 0.42], [0.21, 0.6], [0.25, 0.76], [0.27, 0.69], [0.29, 0.86],
+    [0.305, 0.78], [0.325, 0.95], [0.345, 0.82], [0.365, 0.88], [0.39, 0.7], [0.44, 0.54],
+    [0.51, 0.42], [0.59, 0.37], [0.67, 0.45], [0.75, 0.55], [0.81, 0.58], [0.87, 0.49],
+    [0.93, 0.36], [1, 0.28],
+  ];
+  const LAKE = 0.22; // share of the sign-off area at the bottom that is lake
+  const SKYLINE_STRENGTH = 0.7; // skyline dot color: darker than the field so the drawing reads
+
+  function ridgeAt(t: number) {
+    for (let i = 1; i < RIDGE.length; i++) {
+      const [x1, y1] = RIDGE[i];
+      if (t <= x1) {
+        const [x0, y0] = RIDGE[i - 1];
+        return y0 + ((y1 - y0) * (t - x0)) / (x1 - x0);
+      }
+    }
+    return RIDGE[RIDGE.length - 1][1];
+  }
+
   const TRAIL_RADIUS = 48; // CSS px around the mouse whose dots light up
   const TRAIL_DOT = 2; // CSS px size of a lit dot, a little bigger than the field's so the olive reads
   const TRAIL_FADE = 700; // ms for a lit dot to fade back
@@ -49,15 +72,39 @@
 
     let last = "";
     // Layout of the field, kept for the trail so it lights exactly the dots that are drawn
-    let field = { width: 0, cx: 0, cy: 0, reach: 1 };
+    let field = { width: 0, height: 0, signoff: 0, cx: 0, cy: 0, reach: 1 };
 
-    function hasDot(x: number, y: number) {
+    // Extra density of the skyline at the end of the page (0 outside it)
+    function skyline(x: number, y: number) {
+      const { width, height, signoff } = field;
+      const top = height - signoff;
+      if (!signoff || y < top) return 0;
+      const v = (y - top) / signoff; // 0 at the top of the area, 1 at the end of the page
+      const lakeTop = 1 - LAKE;
+      if (v >= lakeTop) {
+        // Lake: a few sparse rows of shimmer, thinning towards the shore
+        const row = Math.round((y - top) / GRID);
+        return row % 2 ? 0 : 0.35 * (1 - (v - lakeTop) / LAKE);
+      }
+      const ridgeY = lakeTop * (1 - ridgeAt(x / width)); // ridge height measured up from the lake
+      if (v < ridgeY) return 0;
+      // Mountain body: a slightly lighter rim along the ridge, solid further down
+      const depth = Math.min(1, ((v - ridgeY) * signoff) / 24);
+      return 0.4 + 0.3 * depth;
+    }
+
+    // 0 = no dot, 1 = field dot, 2 = skyline dot
+    function dotAt(x: number, y: number) {
       const { cx, cy, reach } = field;
+      const threshold = BAYER[((y / GRID) % 8) * 8 + ((x / GRID) % 8)];
+      if (skyline(x, y) > threshold) return 2;
       const hero = Math.exp(-y / DECAY);
       const proximity = Math.max(0, 1 - Math.hypot(x - cx, (y - cy) * 1.3) / reach);
       const density = MAX_DENSITY * (FLOOR + (1 - FLOOR) * hero * (0.15 + 0.85 * proximity ** 1.5));
-      return density > BAYER[((y / GRID) % 8) * 8 + ((x / GRID) % 8)];
+      return density > threshold ? 1 : 0;
     }
+
+    const hasDot = (x: number, y: number) => dotAt(x, y) > 0;
 
     function draw(force = false) {
       // Measure the page without the canvas itself, which would otherwise keep the old height
@@ -75,21 +122,23 @@
       canvas!.height = height;
       ctx!.clearRect(0, 0, width, height);
       const styles = getComputedStyle(document.documentElement);
-      ctx!.fillStyle = mix(
-        styles.getPropertyValue("--color-line").trim(),
-        styles.getPropertyValue("--color-muted").trim(),
-        STRENGTH
-      );
+      const line = styles.getPropertyValue("--color-line").trim();
+      const muted = styles.getPropertyValue("--color-muted").trim();
+      const colors = ["", mix(line, muted, STRENGTH), mix(line, muted, SKYLINE_STRENGTH)];
 
       // Densest around where the portrait sits: right column on desktop, top left on mobile
       const cx = width >= 1024 ? width * 0.72 : width * 0.3;
       const cy = width >= 1024 ? 300 : 200;
       const reach = Math.max(width * 0.45, 520);
-      field = { width, cx, cy, reach };
+      const signoff = document.querySelector<HTMLElement>(".signoff")?.offsetHeight ?? 0;
+      field = { width, height, signoff, cx, cy, reach };
 
       for (let y = 0; y < height; y += GRID) {
         for (let x = 0; x < width; x += GRID) {
-          if (hasDot(x, y)) ctx!.fillRect(x, y, DOT, DOT);
+          const dot = dotAt(x, y);
+          if (!dot) continue;
+          ctx!.fillStyle = colors[dot];
+          ctx!.fillRect(x, y, DOT, DOT);
         }
       }
     }

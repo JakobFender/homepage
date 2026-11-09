@@ -409,6 +409,17 @@ body::before {
   image-rendering: pixelated;
 }
 
+/* Space at the end of every page for the skyline drawn by BackgroundDither.astro */
+.signoff {
+  height: 160px;
+}
+
+@media (min-width: 768px) {
+  .signoff {
+    height: 200px;
+  }
+}
+
 /* Olive dots that light up near the mouse (BackgroundDither.astro); sits just above the field */
 .bg-dither-trail {
   position: fixed;
