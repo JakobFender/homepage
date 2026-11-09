@@ -1,6 +1,7 @@
 ---
 // Small animated scene on top of the dotted Pilatus in the .signoff space above the footer.
 // Click the mountain and the cogwheel railway (the steepest in the world) climbs to the summit.
+// In dark mode, stars twinkle above the ridge next to a small crescent moon.
 // The mountain itself is drawn by BackgroundDither.astro; both use src/scripts/skyline.ts.
 ---
 
@@ -17,6 +18,9 @@
   const CLIMB = 6000; // ms from the valley to the summit
   const REST = 1200; // ms at the summit
   const DESCEND = 4000; // ms back down
+  const STAR_SPACING = 40; // CSS px of width per star
+  // Crescent moon, one character per CSS px
+  const MOON = ["  ####  ", " ###    ", "###     ", "###     ", "###     ", " ###    ", "  ####  "];
 
   let stop: (() => void) | undefined;
 
@@ -33,6 +37,11 @@
     let frame = 0;
     let trainStart = 0; // timestamp of the current trip, 0 when the train is in the depot
     let accent = "";
+    let visible = false; // the scene is on screen
+    let dark = document.documentElement.dataset.theme === "dark";
+    type Star = { x: number; y: number; size: number; phase: number; speed: number };
+    let stars: Star[] = [];
+    let moon = { x: 0, y: 0 };
 
     // Geometry of the .signoff space, which starts SKY px below the canvas top
     const areaHeight = () => (height - SKY) * (1 - LAKE);
@@ -47,7 +56,47 @@
       pageTop = canvas!.getBoundingClientRect().top + window.scrollY;
       canvas!.width = width;
       canvas!.height = height;
+      placeSky();
       draw(performance.now());
+    }
+
+    // Stars at fixed pseudo-random spots in the sky above the ridge, the same on every visit
+    function placeSky() {
+      let seed = 7;
+      const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+      stars = [];
+      const count = Math.round(width / STAR_SPACING);
+      for (let i = 0; stars.length < count && i < count * 20; i++) {
+        const x = Math.round(random() * width);
+        const y = Math.round(2 + random() * (height - 2));
+        if (y > crestY(x) - 8) continue; // keep clear of the mountain
+        // size 2: a 2px star; size 3: a bright one, drawn as a small cross
+        stars.push({ x, y, size: random() < 0.2 ? 3 : 2, phase: random() * Math.PI * 2, speed: 0.6 + random() * 1.4 });
+      }
+      // Moon to the right of the summit, high in the sky
+      const { summit } = route();
+      moon = { x: Math.round(Math.min(width - 24, summit + Math.max(90, width * 0.16))), y: 6 };
+    }
+
+    function drawSky(now: number) {
+      const text = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
+      ctx!.fillStyle = text;
+      for (const star of stars) {
+        // Slow twinkle between dim and bright; still under reduced motion
+        const twinkle = reduceMotion ? 0.8 : 0.55 + 0.4 * Math.sin((now / 1000) * star.speed + star.phase);
+        ctx!.globalAlpha = Math.max(0.15, twinkle);
+        if (star.size === 3) {
+          ctx!.fillRect(star.x - 1, star.y, 3, 1);
+          ctx!.fillRect(star.x, star.y - 1, 1, 3);
+        } else {
+          ctx!.fillRect(star.x, star.y, 2, 2);
+        }
+      }
+      ctx!.globalAlpha = 0.9;
+      MOON.forEach((row, ry) => {
+        for (let rx = 0; rx < row.length; rx++) if (row[rx] === "#") ctx!.fillRect(moon.x + rx, moon.y + ry, 1, 1);
+      });
+      ctx!.globalAlpha = 1;
     }
 
     // The trip runs from the low hills left of the massif to the summit
@@ -80,24 +129,40 @@
       });
     }
 
-    function draw(now: number) {
-      ctx!.clearRect(0, 0, width, height);
-      if (!trainStart) return false;
+    function drawTrain(now: number) {
+      if (!trainStart) return;
       const x = trainX(now);
       if (x === null) {
         trainStart = 0;
-        return false;
+        return;
       }
       ctx!.fillStyle = accent;
       // Two cars, the second one lower on the slope behind the first
       const carWidth = (CAR[0].length + CAR_GAP) * PX;
       drawSprite(CAR, x, crestDotY(x));
       drawSprite(CAR, x - carWidth, crestDotY(x - carWidth));
-      return true;
     }
 
+    function draw(now: number) {
+      ctx!.clearRect(0, 0, width, height);
+      if (dark) drawSky(now);
+      drawTrain(now);
+    }
+
+    // Animate only while on screen and something moves: a train trip, or twinkling stars
+    const animating = () => visible && (trainStart > 0 || (dark && !reduceMotion));
+
     function tick(now: number) {
-      frame = draw(now) ? requestAnimationFrame(tick) : 0;
+      draw(now);
+      frame = animating() ? requestAnimationFrame(tick) : 0;
+    }
+
+    function update() {
+      if (animating()) {
+        if (!frame) frame = requestAnimationFrame(tick);
+      } else {
+        draw(performance.now()); // still frame, e.g. static stars or a cleared sky
+      }
     }
 
     // Is the point inside the mountain (below its crest, above the lake)?
@@ -115,17 +180,30 @@
       if (reduceMotion || trainStart || !onMountain(event)) return;
       accent = getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
       trainStart = performance.now();
-      if (!frame) frame = requestAnimationFrame(tick);
+      update();
     };
 
     resize();
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(canvas);
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      update();
+    });
+    visibilityObserver.observe(canvas);
+    // Stars come out when the theme toggle switches to dark
+    const themeObserver = new MutationObserver(() => {
+      dark = document.documentElement.dataset.theme === "dark";
+      update();
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("click", onClick);
     stop = () => {
       cancelAnimationFrame(frame);
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
+      themeObserver.disconnect();
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("click", onClick);
     };
