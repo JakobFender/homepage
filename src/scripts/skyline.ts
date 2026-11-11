@@ -15,7 +15,7 @@ export const PILATUS = [
 ];
 export const GRID = 4; // CSS px between background dot positions
 export const PILATUS_ASPECT = 3; // drawn width as a multiple of the mountain area's height (photo: ~2.5)
-export const LAKE = 0.22; // share of the sign-off area at the bottom that is lake
+export const LAKE = 0.4; // share of the sign-off area at the bottom that is lake
 
 export function sample(profile: number[], t: number) {
   const i = Math.min(Math.max(t, 0), 1) * (profile.length - 1);

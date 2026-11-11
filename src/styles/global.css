@@ -431,7 +431,7 @@ body::before {
 /* Space at the bottom of the page for the skyline drawn by BackgroundDither.astro */
 .signoff {
   position: relative;
-  height: 160px;
+  height: 210px;
 }
 
 /* Animated scene on top of the dotted mountain (PilatusScene.astro). It reaches 48px (SKY) above the
@@ -447,7 +447,7 @@ body::before {
 
 @media (min-width: 768px) {
   .signoff {
-    height: 260px;
+    height: 340px;
   }
 }
 
