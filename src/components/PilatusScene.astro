@@ -371,7 +371,7 @@
     // The Chapel Bridge runs out from the left shore on trestles and, at the Water Tower, takes its
     // famous bend: the last stretch turns away from the viewer towards the far shore, rising up the
     // lake and shrinking to about two thirds as it goes. The tower stands just behind the bend.
-    // Both hide whatever passes behind them, except through the open gallery under the roof.
+    // Both hide whatever is behind them, the dotted mountain included, except through the open gallery.
     function drawBridge() {
       const lakeTop = SKY + areaHeight();
       const lake = height - lakeTop;
@@ -382,47 +382,58 @@
       const bend = left + front;
       const away = Math.min(Math.round(width * 0.1), 110); // screen width of the part past the bend
       const towerX = bend;
-      ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
-      // Tower first, so the bridge passes in front of it
+      const styles = getComputedStyle(document.documentElement);
+      const text = styles.getPropertyValue("--color-base-content").trim();
+      const background = styles.getPropertyValue("--color-base-100").trim();
+      // Tower first, so the bridge passes in front of it. Each pixel gets the page background first,
+      // so the dotted mountain behind does not show through its partly transparent shades
       const towerWidth = TOWER[0].length * PX;
       const towerLeft = towerX - towerWidth / 2;
       const towerTop = water - TOWER.length * PX;
       TOWER.forEach((row, ry) => {
         for (let rx = 0; rx < row.length; rx++) {
           if (row[rx] === " ") continue;
-          ctx!.clearRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+          ctx!.globalAlpha = 1;
+          ctx!.fillStyle = background;
+          ctx!.fillRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
+          ctx!.fillStyle = text;
           ctx!.globalAlpha = TOWER_ALPHA[row[rx]];
           ctx!.fillRect(towerLeft + rx * PX, towerTop + ry * PX, PX, PX);
         }
       });
+      ctx!.fillStyle = text;
       drawReflection(TOWER, towerX, water);
-      // Draw the bridge one CSS px column at a time. Past the bend each column stands higher on the
-      // lake and is scaled down; along tracks the distance along the bridge, so posts and trestles
-      // keep their spacing and close up as the bridge recedes
+      // Draw the bridge one CSS px column at a time. Past the bend the bridge rises up the lake and
+      // shrinks: every edge (water line, deck, wall top, roof) is its own straight line, rounded once,
+      // so the edges stay clean instead of jogging. along tracks the distance along the bridge, so posts
+      // and trestles keep their spacing and close up as the bridge recedes
+      const edge = (f: number, above: number) => Math.round(water + (farWater - water) * f - above * (1 - 0.35 * f));
       let along = 0;
       for (let x = left; x <= bend + away; x++) {
         const f = Math.max(0, (x - bend) / away); // 0 up to the bend, 1 at the far end
-        const scale = 1 - 0.35 * f;
-        const base = Math.round(water + (farWater - water) * f); // water line under this column
-        const deck = base - Math.round(8 * scale); // bottom of the wall, trestles below it
-        const wallTop = deck - Math.max(1, Math.round(3 * scale));
-        const roofBottom = wallTop - Math.max(2, Math.round(4 * scale));
-        const roofTop = roofBottom - Math.max(2, Math.round(4 * scale));
-        along += 1 / scale;
-        // Roof band and wall hide what is behind them
-        ctx!.clearRect(x, roofTop, 1, roofBottom - roofTop);
-        ctx!.clearRect(x, wallTop, 1, deck - wallTop);
+        const base = edge(f, 0); // water line under this column
+        const deck = Math.min(base - 1, edge(f, 8)); // bottom of the wall, trestles below it
+        const wallTop = Math.min(deck - 1, edge(f, 11));
+        const roofBottom = Math.min(wallTop - 2, edge(f, 15));
+        const roofTop = Math.min(roofBottom - 2, edge(f, 19));
+        along += 1 / (1 - 0.35 * f);
+        // Roof band and wall are solid: paint the page background first so nothing behind shows through
+        ctx!.globalAlpha = 1;
+        ctx!.fillStyle = background;
+        ctx!.fillRect(x, roofTop, 1, roofBottom - roofTop);
+        ctx!.fillRect(x, wallTop, 1, deck - wallTop);
+        ctx!.fillStyle = text;
         ctx!.globalAlpha = 0.8;
         const ridge = x >= left + 3; // the ridge stops short of the eave at the shore
         ctx!.fillRect(x, ridge ? roofTop : roofTop + 1, 1, roofBottom - roofTop - (ridge ? 0 : 1));
         ctx!.fillRect(x, wallTop, 1, deck - wallTop);
         // Open gallery: posts under the roof
         ctx!.globalAlpha = 0.6;
-        if (along % 8 < 1 / scale) ctx!.fillRect(x, roofBottom, 1, wallTop - roofBottom);
+        if (along % 8 < 1 / (1 - 0.35 * f)) ctx!.fillRect(x, roofBottom, 1, wallTop - roofBottom);
         // Trestles down into the water: two piles with a cross brace
         const bay = (along - 10) % 26;
         if (bay >= 0 && (bay < 2 || (bay >= 8 && bay < 10))) ctx!.fillRect(x, deck, 1, base - deck);
-        if (bay >= 0 && bay < 10) ctx!.fillRect(x, deck + Math.round(2 * scale), 1, 1);
+        if (bay >= 0 && bay < 10) ctx!.fillRect(x, Math.min(base - 1, deck + 2), 1, 1);
       }
       ctx!.globalAlpha = 1;
     }
