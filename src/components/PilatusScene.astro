@@ -369,18 +369,18 @@
     }
 
     // The Chapel Bridge runs out from the left shore on trestles and, at the Water Tower, takes its
-    // famous bend: the rest of it turns away from the viewer and recedes across the water towards the
-    // far shore, rising up the lake and shrinking as it goes. The tower stands just behind the bend.
+    // famous bend: a short last stretch turns away from the viewer towards the far shore, rising a
+    // little up the lake and shrinking slightly as it goes. The tower stands just behind the bend.
     // Both hide whatever passes behind them, except through the open gallery under the roof.
     function drawBridge() {
       const lakeTop = SKY + areaHeight();
       const lake = height - lakeTop;
-      const water = Math.round(lakeTop + lake * 0.62); // where the front part stands
-      const farWater = lakeTop + lake * 0.3; // where the far end meets the water
+      const water = Math.round(lakeTop + lake * 0.42); // where the front part stands
+      const farWater = water - lake * 0.07; // where the far end meets the water, a little further back
       const left = -2 * PX;
       const front = Math.min(Math.round(width * 0.3), 330); // length of the straight front part
       const bend = left + front;
-      const away = Math.min(Math.round(width * 0.22), 240); // screen width of the receding part
+      const away = Math.min(Math.round(width * 0.04), 40); // screen width of the short part past the bend
       const towerX = bend;
       ctx!.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim();
       // Tower first, so the bridge passes in front of it
@@ -402,7 +402,7 @@
       let along = 0;
       for (let x = left; x <= bend + away; x++) {
         const f = Math.max(0, (x - bend) / away); // 0 up to the bend, 1 at the far end
-        const scale = 1 - 0.55 * f;
+        const scale = 1 - 0.2 * f;
         const base = Math.round(water + (farWater - water) * f); // water line under this column
         const deck = base - Math.round(8 * scale); // bottom of the wall, trestles below it
         const wallTop = deck - Math.max(1, Math.round(3 * scale));
