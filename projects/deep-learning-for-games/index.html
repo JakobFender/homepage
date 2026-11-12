@@ -1,0 +1,445 @@
+<!DOCTYPE html><html lang="en" data-astro-transition-scope="astro-smooz4hq-1"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta name="description" content="A modular Jass-playing agent combining Determinized Monte Carlo Tree Search, neural trump prediction, and rule-based heuristics. The project evaluates algorithmic tradeoffs, MCTS convergence behavior, and distributed search under real-time constraints, culminating in a competitive tournament deployment."><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v5.15.2"><title>Jass Agent using Monte Carlo Tree Search</title><!-- Fonts: Besley (headings), Petrona (hero first name), Onest (body), Martian Mono (labels) --><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Besley:wght@500&family=Petrona:ital,wght@1,800&family=Onest:wght@400;500&family=Martian+Mono&display=swap"><!-- View Transitions --><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.elfUsALL.js"></script><!-- Open Graph / Social Media --><meta property="og:title" content="Jass Agent using Monte Carlo Tree Search"><meta property="og:description" content="A modular Jass-playing agent combining Determinized Monte Carlo Tree Search, neural trump prediction, and rule-based heuristics. The project evaluates algorithmic tradeoffs, MCTS convergence behavior, and distributed search under real-time constraints, culminating in a competitive tournament deployment."><meta property="og:type" content="website"><meta property="og:url" content="https://jakob-fender.ch"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Jass Agent using Monte Carlo Tree Search"><meta name="twitter:description" content="A modular Jass-playing agent combining Determinized Monte Carlo Tree Search, neural trump prediction, and rule-based heuristics. The project evaluates algorithmic tradeoffs, MCTS convergence behavior, and distributed search under real-time constraints, culminating in a competitive tournament deployment."><!-- Canonical --><link rel="canonical" href="https://jakob-fender.ch/projects/deep-learning-for-games/"><link rel="stylesheet" href="/_astro/_slug_.JlRo13g7.css">
+<style>.prose-content{color:inherit;line-height:1.6}.prose-content h1,.prose-content h2,.prose-content h3,.prose-content h4,.prose-content h5,.prose-content h6{margin-top:3rem;margin-bottom:1rem}.prose-content h4,.prose-content h5,.prose-content h6{font-weight:500}.prose-content p{margin-bottom:1rem}.prose-content a{color:var(--color-primary);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;transition:color .2s ease-out}.prose-content a:hover{color:var(--color-base-content);text-decoration-thickness:2px}.prose-content ul,.prose-content ol{margin-bottom:1rem;margin-left:1.5rem;list-style-position:outside}.prose-content ul{list-style-type:disc}.prose-content ol{list-style-type:decimal}.prose-content li{margin-bottom:.5rem}.prose-content code{padding:.125rem .375rem;border-radius:2px;font-size:.8em;font-family:var(--font-mono);background:var(--color-base-200)}.prose-content pre{padding:1rem;border-radius:2px;background:var(--color-base-200);overflow-x:auto;margin-bottom:1rem}.prose-content pre code{background:transparent;padding:0}.prose-content blockquote{border-left:1px solid var(--color-accent);padding-left:1rem;color:var(--color-muted);margin:1rem 0}.prose-content img{border-radius:2px;border:1px solid var(--color-line);margin:1.5rem 0}.prose-content strong{font-weight:500}
+</style><style>[data-astro-transition-scope="astro-smooz4hq-1"] { view-transition-name: astro-smooz4hq-1; }@layer astro { ::view-transition-old(astro-smooz4hq-1) { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: forwards;
+	animation-name: fadeOut; }::view-transition-new(astro-smooz4hq-1) { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: backwards;
+	animation-name: fadeIn; }[data-astro-transition=back]::view-transition-old(astro-smooz4hq-1) { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: forwards;
+	animation-name: fadeOut; }[data-astro-transition=back]::view-transition-new(astro-smooz4hq-1) { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: backwards;
+	animation-name: fadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-smooz4hq-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-smooz4hq-1"] { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: forwards;
+	animation-name: fadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-smooz4hq-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-smooz4hq-1"] { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: backwards;
+	animation-name: fadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-smooz4hq-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-smooz4hq-1"] { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: forwards;
+	animation-name: fadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-smooz4hq-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-smooz4hq-1"] { 
+	animation-duration: 200ms;
+	animation-timing-function: ease-out;
+	animation-fill-mode: backwards;
+	animation-name: fadeIn; }</style></head> <body class="min-h-screen"> <canvas class="bg-dither" aria-hidden="true"></canvas> <canvas class="bg-dither-trail" aria-hidden="true"></canvas> <script type="module" src="/_astro/BackgroundDither.astro_astro_type_script_index_0_lang.BmPr_Shw.js"></script>  <!-- Theme Controls - Fixed Position --> <div class="fixed top-4 right-4 z-50"> <label class="swap swap-rotate"> <!-- Not DaisyUI's .theme-controller: that switches the theme in CSS before the script can animate it --> <input type="checkbox" class="theme-toggle" value="dark" aria-label="Toggle dark mode"> <!-- sun icon --> <svg class="swap-off fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"> <path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"></path> </svg> <!-- moon icon --> <svg class="swap-on fill-current w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"> <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"></path> </svg> </label> <script>
+  // Set theme on page load based on localStorage or system preference
+  function setTheme() {
+    const theme = localStorage.getItem('theme') ||
+                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    const toggle = document.querySelector('.theme-toggle');
+    if (toggle) {
+      toggle.checked = theme === 'dark';
+    }
+  }
+
+  // Update theme when toggle is clicked
+  document.addEventListener('change', (e) => {
+    const target = e.target;
+    if (target.classList.contains('theme-toggle')) {
+      const theme = target.checked ? 'dark' : 'light';
+      const apply = () => document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      // Spread the new theme as a circle from the toggle where the View Transitions API exists
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!document.startViewTransition || reduceMotion) {
+        apply();
+        return;
+      }
+      const rect = target.closest('label').getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      // Radius that reaches the farthest corner of the viewport
+      const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      const root = document.documentElement;
+      // Astro's page transitions give <html> its own view-transition name, so the page is captured under it
+      const name = getComputedStyle(root).viewTransitionName;
+      const layer = name && name !== 'none' ? name : 'root';
+      root.classList.add('theme-reveal');
+      const transition = document.startViewTransition(apply);
+      transition.ready.then(() => {
+        root.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 450, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', pseudoElement: `::view-transition-new(${layer})` }
+        );
+      });
+      transition.finished.finally(() => root.classList.remove('theme-reveal'));
+    }
+  });
+
+  // Run on page load
+  setTheme();
+
+  // Run after view transitions
+  document.addEventListener('astro:after-swap', setTheme);
+</script> </div>  <article class="max-w-[1080px] mx-auto px-6 md:px-12 py-16 md:py-24"> <!-- Back link --> <p class="mb-12 text-[15px]"> <a href="/projects" class="link">← Back to projects</a> </p> <!-- Project Header --> <header class="mb-8"> <p class="meta mb-4"> Sep 2024 – Dec 2024 · 3 months  </p> <h1 class="mb-6">Jass Agent using Monte Carlo Tree Search</h1> <p class="mb-6">A modular Jass-playing agent combining Determinized Monte Carlo Tree Search, neural trump prediction, and rule-based heuristics. The project evaluates algorithmic tradeoffs, MCTS convergence behavior, and distributed search under real-time constraints, culminating in a competitive tournament deployment.</p> <div class="mb-8"> <p class="meta text-left">Monte Carlo Tree Search · Reinforcement Learning · Distributed Systems</p> </div> <!-- Prominent Action Buttons -->  </header> <hr class="border-line mb-12"> <!-- Project Content --> <div class="prose-content max-w-none">  <p>As a requirement to attend the final exam for this module, we implemented a Jass-playing agent that competed against
+agents developed by other students. In addition to the implementation, we were required to submit a short technical
+report and a video explaining our approach and design choices. The agent was developed collaboratively together with
+Dan Livingston. All figures were originally only used for debugging. The source code can be found on
+<a href="https://github.com/JakobFender/dl4g">GitHub</a>.</p>
+<h2 id="abstract">Abstract</h2>
+<p>This project presents an exploration of artificial intelligence techniques for automating gameplay in Jass, a popular
+Swiss card game. We implemented bots with various strategies to evaluate performance in both choosing the trump suit
+and playing cards. Key contributions include the use of rule-based strategies, statistical models, and deep neural
+networks to optimize gameplay decisions.</p>
+<h2 id="introduction">Introduction</h2>
+<p>This work was created for the Deep Learning for Games course at the Lucerne University of Applied Sciences and Arts.
+We had to implement a bot that plays Jass, a traditional card game widely played in Switzerland.</p>
+<h2 id="methods-to-implement">Methods to Implement</h2>
+<p>In this simulation of Jass, the bots have to implement two methods. Both methods need to provide a response within 10
+seconds or a random move will be played. <code>choose_card</code>, called when the bot has to choose a card to play and
+<code>choose_trump</code>, called when the bot has to choose the trump.</p>
+<h3 id="information-provided-to-the-bot">Information Provided to the Bot</h3>
+<p>The bot receives an observation of the game containing the information below</p>
+<ul>
+<li>Dealer</li>
+<li>Trump declarer</li>
+<li>Chosen trump</li>
+<li>Whether trump was declared forehand</li>
+<li>Played tricks so far</li>
+<li>Winner and starting player of each trick</li>
+<li>Team points (current round)</li>
+<li>Opponent team points (current round)</li>
+<li>Cards played in the current trick</li>
+<li>Current player</li>
+<li>Player hand</li>
+</ul>
+<h2 id="design-choices">Design Choices</h2>
+<p>To explore various approaches, strategies were developed for both methods, enabling the testing of different
+combinations of <code>TrumpStrategies</code> and <code>PlayStrategies</code>. Additionally, <code>PlayRuleStrategies</code> were incorporated, which are
+evaluated in sequence before triggering a <code>PlayStrategy</code>.</p>
+<h3 id="trumpstrategies">TrumpStrategies</h3>
+<p>A TrumpStrategy processes an observation of a game to determine a trump suit, selecting from <code>DIAMONDS</code>, <code>HEARTS</code>,
+<code>SPADES</code>, <code>CLUBS</code>, <code>OBE_ABE</code>, <code>UNE_UFE</code>, or choosing <code>PUSH</code>, which allows the partner to decide the trump suit.</p>
+<h3 id="playstrategies">PlayStrategies</h3>
+<p>It processes an observation of a game and selects a card from the player’s hand to play.</p>
+<h3 id="playrulestrategies">PlayRuleStrategies</h3>
+<p>This is a list of rules that will trigger before a <code>PlayStrategy</code> is called. This is in order to play no-brainer moves.
+The strategy will go through the list, and if one is triggered, it will play the card. If no rule is triggered, the
+<code>PlayStrategy</code> will be called.</p>
+<h2 id="implementations">Implementations</h2>
+<h3 id="trumpstrategies-1">TrumpStrategies</h3>
+<p>Five different <code>TrumpStrategies</code> were implemented:</p>
+<ul>
+<li><code>RandomTrumpStrategy</code>: Chooses a random trump. This strategy cannot choose PUSH.</li>
+<li><code>HighestSumTrumpStrategy</code>: Selects the trump with the most cards of the same suit. This strategy will not choose
+<code>OBE_ABE</code> or <code>UNE_UFE</code> and cannot choose PUSH.</li>
+<li><code>HighestScoreTrumpStrategy</code>: Calculates a score for each trump and selects one if it surpasses a defined threshold.
+This method was proposed by Daniel Graf in his matura work.</li>
+<li><code>StatisticalTrumpStrategy</code>: Adopts a statistical approach to choose the trump based on a dataset of 1.8 million games
+played on swisslos. It evaluates how often a card appeared in the player’s hand when a trump was chosen.</li>
+<li><code>DeepNNTrumpStrategy</code>: Trained on synthetic data by generating approximately 2’000’000 hands and simulating 20 games
+for each trump using a random <code>PlayStrategy</code>, resulting in 120’000’000 total games. A neural network was then trained
+to predict the average points for a given hand, and the trump with the highest predicted score was selected. If the
+score was below a threshold, the strategy decides to <code>PUSH</code>.</li>
+</ul>
+<figure class="my-8 flex flex-col items-center"> <img src="/images/projects/deep-learning-for-games/nn_trump_n_hands.png" alt="Comparison of mean scores for different number of randomly played rounds" class="max-w-full rounded-xs border border-line"> <figcaption class="meta mt-3 w-4/5 text-center"> Figure 1: Comparison of mean scores for different numbers of randomly played rounds per trump for the same
+hand. Scores were aggregated using the mean and median. After approximately 20 simulated rounds, the scores converge
+and show no further change. </figcaption> </figure>
+<h3 id="playstrategies-1">PlayStrategies</h3>
+<ul>
+<li><code>RandomPlayStrategy</code>: Chooses a random valid card from the hand.</li>
+<li><code>HighestValuePlayStrategy</code>: Chooses the highest value card from the hand.</li>
+<li><code>MCTSPlayStrategy</code>: Randomly distributes other cards among the players. Then uses Monte Carlo Tree Search to find the
+best card to play for this hand.</li>
+<li><code>DeterminizedMCTSPlayStrategy</code>: Takes <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em"></span><span class="mord mathnormal">d</span></span></span></span> random samples of the remaining cards and uses Monte Carlo Tree Search to
+find
+the best card to play for this hand. Takes the card that works best on average.</li>
+</ul>
+<h3 id="playrulestrategies-1">PlayRuleStrategies</h3>
+<ul>
+<li><code>OnlyValidPlayRule</code>: If only one card is valid, play it. This is to save time and resources.</li>
+<li><code>SmearPlayRule</code>: Smearing is a strategy in Jass where you play a high-value card when the trick is already won.</li>
+<li><code>TrumpJackPlayRule</code>: If the player has Trump Jack, play it if an opponent played the Trump 9 or the total points of
+the trick are above 20.</li>
+<li><code>PullTrumpPlayRule</code>: As long as the opponents have trump cards, play the highest trump card.</li>
+<li><code>MiniMaxPlayRule</code>: At a certain threshold, switch to the mini-max strategy.</li>
+<li><code>SwisslosOpeningPlayRule</code>: This was an attempt to code all opening rules from swisslos. We discontinued this because
+it was too complex and not worth the effort.</li>
+</ul>
+<h2 id="evaluation">Evaluation</h2>
+<p>The setup involves initializing an Arena. Upon execution, four bots are generated and evenly distributed into two teams.
+During the course of the games, their positions are adjusted by resetting the Arena halfway through, allowing for a
+balanced and comprehensive evaluation of performance. We fixed the seed for all experiments and executed them on the
+same hardware. The results table contain the Winrate and Average Points for both Overall (O) and for only Trump Rounds
+(T).</p>
+<h3 id="trumpstrategy-evaluation">TrumpStrategy Evaluation</h3>
+<p>To evaluate the <code>TrumpStrategies</code> independent of the <code>PlayStrategy</code>, we ran every <code>TrumpStrategy</code> together with the
+RandomPlayStrategy and no <code>PlayRuleStrategies</code>. The opponent played with a random <code>TrumpStrategy</code>. We played 10’000
+games
+in total.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Strategy</strong></th><th><strong>Winrate O</strong></th><th><strong>Winrate T</strong></th><th><strong>Average Points O</strong></th><th><strong>Average Points T</strong></th></tr></thead><tbody><tr><td><strong>Random</strong></td><td>50.00</td><td>50.00</td><td>78.5</td><td>78.5</td></tr><tr><td><strong>HighestSum</strong></td><td>59.15</td><td>69.88</td><td>85.8071</td><td>93.7382</td></tr><tr><td><strong>HighestScore</strong></td><td>64.11</td><td>78.44</td><td>89.8663</td><td>101.387</td></tr><tr><td><strong>Statistical</strong></td><td>62.43</td><td>75.24</td><td>88.2777</td><td>98.3564</td></tr><tr><td><strong>DeepNN</strong></td><td>65.23</td><td>81.08</td><td>90.6736</td><td>103.2246</td></tr></tbody></table>
+<h3 id="playstrategy-evaluation">PlayStrategy Evaluation</h3>
+<p>Similar to the <code>TrumpStrategies</code>, we evaluated the <code>PlayStrategies</code> independent of the <code>TrumpStrategy</code>. We ran every
+PlayStrategy together with the best <code>TrumpStrategy</code>, <code>DeepNNTrumpStrategy</code>, for both teams. The amount of games we
+played varied due to computational limitations. We played 100 games for MCTS and DMCTS The time limit for choosing a
+card is 5 seconds, half of the time in the official tournament. For DMCTS we chose 31 determinations, due to hardware
+constraints.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Strategy</strong></th><th><strong>Winrate O</strong></th><th><strong>Winrate T</strong></th><th><strong>Average Points O</strong></th><th><strong>Average Points T</strong></th></tr></thead><tbody><tr><td><strong>Random</strong></td><td>50.00</td><td>80.74</td><td>78.5</td><td>102.9398</td></tr><tr><td><strong>HighestValue</strong></td><td>46.14</td><td>79.40</td><td>75.6356</td><td>104.0712</td></tr><tr><td><strong>MCTS (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mo>=</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">d=1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em"></span><span class="mord mathnormal">d</span><span class="mspace" style="margin-right:0.2778em"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span></strong></td><td>62.00</td><td>98.00</td><td>88.9</td><td>117.96</td></tr><tr><td><strong>DMCTS</strong></td><td>64.00</td><td>96.00</td><td>90.61</td><td>117.1</td></tr></tbody></table>
+<h4 id="mcts-iterationperformance-tradeoff">MCTS Iteration–Performance Tradeoff</h4>
+<p>Further experiments were conducted to identify an optimal number of MCTS iterations. No clear convergence point was
+observed. For a full hand of nine cards, the search did not converge even after 100 000 node expansions, which is far
+beyond the maximum number of iterations achievable within the tournament time limit. The identity of the best action
+continued to change, indicating that no single card consistently dominates. This suggests that the action space cannot
+be explored sufficiently within a reasonable time budget.</p>
+<figure class="my-8 flex flex-col items-center"> <img src="/images/projects/deep-learning-for-games/mcts_9_per_iteration.png" alt="Comparison of mean scores and selected card index for different numbers of MCTS expansions with a full hand" class="max-w-full rounded-xs border border-line"> <figcaption class="meta mt-3 w-4/5 text-center"> Figure 2: Comparison of score (left) and current best card index (right) per iteration with a full hand of
+nine cards. The selected action does not converge to a single card, even after extensive tree expansion. </figcaption> </figure>
+<p>To test whether this behavior is caused by the large action space, the experiment was repeated with only three cards
+remaining in each hand. Even in this reduced setting, the argmax action continued to change until the search tree was
+fully expanded.</p>
+<figure class="my-8 flex flex-col items-center"> <img src="/images/projects/deep-learning-for-games/mcts_3_per_iteration.png" alt="Comparison of mean scores and selected card index for different numbers of MCTS expansions with three cards
+per hand" class="max-w-full rounded-xs border border-line"> <figcaption class="meta mt-3 w-4/5 text-center"> Figure 3: Comparison of score (left) and current best card index (right) per iteration with only three
+cards remaining per hand. The search still fails to converge to a single action before full tree expansion. </figcaption> </figure>
+<h3 id="playrulestrategy-evaluation">PlayRuleStrategy Evaluation</h3>
+<p>For the <code>PlayRuleStrategies</code>, we evaluated them together with <code>DeepNNTrumpStrategy</code>. For the <code>PlayStrategies</code>, we
+selected RandomPlayStrategy and <code>DeterminizedMCTSPlayStrategy</code>. The amount of games we played varied due to
+computational limitations. Note that <code>MiniMaxPlayRule</code> was limited to 5 seconds per move and we only ran 100 Games. The
+runs with DMCTS PlayStrategy were limited to 200 Games</p>
+<h4 id="performance-of-playrulestrategies-for-randomplaystrategy">Performance of PlayRuleStrategies for RandomPlayStrategy</h4>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Strategy</strong></th><th><strong>Winrate O</strong></th><th><strong>Winrate T</strong></th><th><strong>Average Points O</strong></th><th><strong>Average Points T</strong></th></tr></thead><tbody><tr><td><strong>None</strong></td><td>50.00</td><td>80.74</td><td>78.5</td><td>102.9398</td></tr><tr><td><strong>OnlyValid</strong></td><td>50.00</td><td>80.74</td><td>78.5</td><td>102.9398</td></tr><tr><td><strong>Smear</strong></td><td>51.08</td><td>81.50</td><td>79.3933</td><td>103.7926</td></tr><tr><td><strong>TrumpJack</strong></td><td>50.57</td><td>81.54</td><td>79.2585</td><td>104.3382</td></tr><tr><td><strong>PullTrump</strong></td><td>49.29</td><td>80.18</td><td>79.0959</td><td>104.5728</td></tr><tr><td><strong>MiniMax</strong></td><td>51.00</td><td>84.00</td><td>78.46</td><td>105.7</td></tr></tbody></table>
+<h4 id="performance-of-strategies-for-determinized-monte-carlo-tree-search">Performance of Strategies for Determinized Monte Carlo Tree Search</h4>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Strategy</strong></th><th><strong>Winrate O</strong></th><th><strong>Winrate T</strong></th><th><strong>Average Points O</strong></th><th><strong>Average Points T</strong></th></tr></thead><tbody><tr><td><strong>None</strong></td><td>48.50</td><td>81.00</td><td>77.85</td><td>103.62</td></tr><tr><td><strong>OnlyValid</strong></td><td>52.50</td><td>88.00</td><td>78.745</td><td>106.4</td></tr><tr><td><strong>Smear</strong></td><td>50.50</td><td>84.00</td><td>78.575</td><td>103.07</td></tr><tr><td><strong>TrumpJack</strong></td><td>52.50</td><td>83.00</td><td>77.88</td><td>103.16</td></tr><tr><td><strong>PullTrump</strong></td><td>47.50</td><td>74.00</td><td>77.485</td><td>100.78</td></tr><tr><td><strong>MiniMax</strong></td><td>47.50</td><td>79.00</td><td>74.82</td><td>96.63</td></tr><tr><td><strong>All</strong></td><td>51.00</td><td>83.00</td><td>78.79</td><td>103.18</td></tr></tbody></table>
+<h2 id="distributed-dmcts-node-system">Distributed DMCTS Node System</h2>
+<p>DMCTS is limited by compute power. Because of this, we decided to split the workload across multiple computing nodes.
+Communication is handled via HTTP. To ensure our response is within the time limit each worker has a separate timeout
+limit.</p>
+<h2 id="tournament-bot">Tournament Bot</h2>
+<p>For the Tournament we combined the <code>DeepNN</code> <code>TrumpStrategy</code> and the <code>DeterminizedMCTS</code> <code>PlayStrategy</code> with the
+<code>OnlyValid</code>, <code>SmearPlay</code> and <code>TrumpJack</code> <code>PlayRuleStrategies</code>. The final tournament was executed on a distributed
+cluster consisting of eight devices, with CPU core counts ranging from 2 to 16, resulting in 62 total cores. Empirical
+experiments showed that the optimal number of determinizations per node is CPU_count − 1. This resulted in a total of
+56 determinizations across the cluster.</p>
+<h2 id="results">Results</h2>
+<p>The tournament consisted of eight matchups, sampled randomly. Each matchup comprised twelve rounds. In every
+odd-numbered round, the game state was identical (hands and trump caller), while the teams were swapped. Scores were
+computed by summing all points won per match. The final ranking was obtained by summing scores across all matchups. This
+evaluation setup favors agents with weaker opponents, as matchups were not skill-balanced.</p>
+<p>In the final tournament, we placed 6th out of 16 participants. Four agents were provided by the lecturers as reference
+points. Two of these placed 1st and 5th, respectively. The 1st-place agent had access to all players cards, giving it a
+significant advantage. The 5th-place agent used a similar approach to our agent, making it a more meaningful point of
+comparison. Our direct match against this agent resulted in loss <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1060</mn></mrow><annotation encoding="application/x-tex">1060</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em"></span><span class="mord">1060</span></span></span></span> to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>824</mn></mrow><annotation encoding="application/x-tex">824</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em"></span><span class="mord">824</span></span></span></span>.</p>
+<h3 id="interpretation">Interpretation</h3>
+<p>Scores overall were plausible. Significant gap in matchup against similar opponent suggest that there is some limitation
+to our agent. The scores are too close to suggest error with implementation of DMCTS. Our interpretation is that due to
+the overhead of communicating with 8 different devices the determinizations couldn’t run as many iterations as hoped.</p>  </div> <hr class="border-line mt-16 mb-8"> <!-- Back to projects link --> <p class="text-[15px]"> <a href="/projects" class="link">← All projects</a> </p> </article>  <script type="module">const d=()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches;let l,g,h,m;function b(){l?.disconnect();const i=document.querySelectorAll("[data-reveal]:not(.is-visible)");if(d()||!("IntersectionObserver"in window)){i.forEach(e=>e.classList.add("is-visible"));return}l=new IntersectionObserver((e,r)=>{let s=0;for(const c of e){if(!c.isIntersecting)continue;const a=c.target;a.style.setProperty("--reveal-delay",`${Math.min(s,5)*80}ms`),a.classList.add("is-visible"),r.unobserve(a),s++}},{rootMargin:"0px 0px -10% 0px"}),i.forEach(e=>l.observe(e)),g?.();let n=0;const t=()=>{n=0,document.querySelectorAll("[data-reveal]:not(.is-visible)").forEach(e=>{e.getBoundingClientRect().bottom<0&&(e.classList.add("is-visible"),l?.unobserve(e))})},o=()=>{n||(n=requestAnimationFrame(t))};window.addEventListener("scroll",o,{passive:!0}),g=()=>{window.removeEventListener("scroll",o),cancelAnimationFrame(n)}}function y(){m?.disconnect();const i=document.querySelectorAll("[data-count]");d()||!("IntersectionObserver"in window)||(m=new IntersectionObserver((n,t)=>{for(const o of n){if(!o.isIntersecting)continue;const e=o.target;t.unobserve(e);const r=e.textContent?.match(/^(\d+)(.*)$/s);if(!r)continue;const[,s,c]=r,a=Number(s),f=w=>e.textContent=String(w).padStart(s.length,"0")+c;let u=0;f(u);const v=Math.max(60,400/Math.max(a,1)),p=()=>{++u>a||(f(u),setTimeout(p,v))};setTimeout(p,200+v)}},{rootMargin:"0px 0px -10% 0px"}),i.forEach(n=>m.observe(n)))}function E(){h?.();const i=document.querySelector(".tl-line");if(!i||d())return;const n=i.parentElement;let t=0;const o=()=>{t=0;const r=n.getBoundingClientRect(),s=(window.innerHeight*.8-r.top)/r.height;i.style.setProperty("--line-progress",String(Math.min(Math.max(s,0),1)))},e=()=>{t||(t=requestAnimationFrame(o))};o(),window.addEventListener("scroll",e,{passive:!0}),window.addEventListener("resize",e),h=()=>{window.removeEventListener("scroll",e),window.removeEventListener("resize",e),cancelAnimationFrame(t)}}document.addEventListener("click",i=>{const n=i.target.closest("details.smooth-details > summary");if(!n||d())return;const t=n.parentElement,o=n.nextElementSibling;if(!o||(i.preventDefault(),t.dataset.animating))return;t.dataset.animating="true";const e=!t.open;e&&(t.open=!0);const r=o.offsetHeight,s={height:"0px",opacity:0,overflow:"hidden"},c={height:`${r}px`,opacity:1,overflow:"hidden"},a=o.animate(e?[s,c]:[c,s],{duration:250,easing:"cubic-bezier(0.2, 0.8, 0.2, 1)",fill:"both"});a.onfinish=()=>{e||(t.open=!1),a.cancel(),delete t.dataset.animating}});document.addEventListener("astro:page-load",()=>{b(),y(),E()});</script> <script type="module">console.log(`%cHi there!%c
+
+Curious how this site works? It's built with Astro, Tailwind and a little canvas.
+Say hello: https://github.com/jakobfender`,"font: 500 20px Besley, Georgia, serif; color: #6B7A3A;","font: 12px 'Martian Mono', monospace; color: inherit;");</script> <div class="fab fab-jump" data-astro-cid-e3lhg3bp> <!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility --> <div class="tooltip tooltip-left relative z-10" data-tip="More links" data-astro-cid-e3lhg3bp> <div tabindex="0" role="button" class="btn btn-lg btn-primary btn-square" data-astro-cid-e3lhg3bp> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-e3lhg3bp="true" class="lucide lucide-link size-6"> <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>  </svg> </div> </div> <!-- Main Action button replaces the original button when FAB is open --> <div class="fab-close z-10" data-astro-cid-e3lhg3bp>
+Close <span class="btn btn-square btn-lg btn-outline bg-base-100" data-astro-cid-e3lhg3bp>✕</span> </div> <!-- Links that jump up out of the button when the FAB is open, one after another --> <div class="fab-item tooltip tooltip-left" data-tip="Home" style="--i: 1" data-astro-cid-e3lhg3bp> <a href="/" class="btn btn-lg btn-square btn-outline bg-base-100" data-astro-cid-e3lhg3bp> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-e3lhg3bp="true" class="lucide lucide-birdhouse size-5"> <path d="M12 18v4"></path><path d="m17 18 1.956-11.468"></path><path d="m3 8 7.82-5.615a2 2 0 0 1 2.36 0L21 8"></path><path d="M4 18h16"></path><path d="M7 18 5.044 6.532"></path><circle cx="12" cy="10" r="2"></circle>  </svg> </a> </div><div class="fab-item tooltip tooltip-left" data-tip="Projects" style="--i: 2" data-astro-cid-e3lhg3bp> <a href="/projects" class="btn btn-lg btn-square btn-outline bg-base-100" data-astro-cid-e3lhg3bp> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-e3lhg3bp="true" class="lucide lucide-folder size-5"> <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"></path>  </svg> </a> </div><div class="fab-item tooltip tooltip-left" data-tip="GitHub Repo" style="--i: 3" data-astro-cid-e3lhg3bp> <a href="https://github.com/JakobFender" class="btn btn-lg btn-square btn-outline bg-base-100" data-astro-cid-e3lhg3bp> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-e3lhg3bp="true" class="lucide lucide-code-xml size-5"> <path d="m18 16 4-4-4-4"></path><path d="m6 8-4 4 4 4"></path><path d="m14.5 4-5 16"></path>  </svg> </a> </div> </div>  <!-- Smooth Scroll -->  </body> </html> 
